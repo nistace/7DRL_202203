@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3018257592778724082}
   - component: {fileID: 1744095363945528302}
+  - component: {fileID: 2644919103215890309}
   m_Layer: 0
   m_Name: App
   m_TagString: Untagged
@@ -41,5 +42,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 07c764bf0bfe4f738f2768061fc2649e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _currentGame:
+    _learnedCommands: []
+    _defaultLetterPowers: []
+    _playerLetterPowers: []
+--- !u!114 &2644919103215890309
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9101083296830887753}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 50697c5c5097924418240878ccaca678, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
