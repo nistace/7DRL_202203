@@ -1,0 +1,6 @@
+[submodule "Assets/Scripts/Utils"]
+	path = Assets/Scripts/Utils
+	url = https://github.com/nistace/unityutils.git
+[submodule "Assets/Editor/Scripts/Utils"]
+	path = Assets/Editor/Scripts/Utils
+	url = https://github.com/nistace/unityeditorutils.git
