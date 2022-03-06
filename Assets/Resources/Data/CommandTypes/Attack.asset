@@ -15,5 +15,5 @@ MonoBehaviour:
   _id:
     _value: 1
   _descriptionPattern: Deals <b>[POW]</b> damages.
-  _usedInCombat: 1
-  _usedOnMap: 0
+  _powerMultiplier: 1
+  _usedInLocations: 1

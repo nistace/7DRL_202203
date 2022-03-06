@@ -16,5 +16,4 @@ MonoBehaviour:
     _value: 6
   _descriptionPattern: Adds <b>[POW]%</b> chances to dodge the next attack.
   _powerMultiplier: 0.2
-  _usedInCombat: 1
-  _usedOnMap: 0
+  _usedInLocations: 1

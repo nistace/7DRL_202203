@@ -2,26 +2,49 @@
 using System.Collections.Generic;
 using System.Linq;
 using _7DRL.Data;
-using _7DRL.MiscConstants;
+using UnityEngine;
 
-namespace _7DRL {
-	public static class Memory {
-		public static IReadOnlyList<CommandType> commandTypes    { get; private set; }
-		public static IReadOnlyList<Command>     commands        { get; private set; }
-		public static IReadOnlyList<Command>     attackCommands  { get; private set; }
-		public static IReadOnlyList<Command>     defenseCommands { get; private set; }
-		public static IReadOnlyList<Command>     dodgeCommands   { get; private set; }
-		public static IReadOnlyList<Command>     healCommands    { get; private set; }
-		public static IReadOnlyList<FoeType>     foeTypes        { get; private set; }
+namespace _7DRL.MiscConstants {
+	public class Memory : MonoBehaviour {
+		private static Memory instance { get; set; }
+
+		[SerializeField] protected CommandType _attackCommandType;
+		[SerializeField] protected CommandType _defenseCommandType;
+		[SerializeField] protected CommandType _healCommandType;
+		[SerializeField] protected CommandType _dodgeCommandType;
+		[SerializeField] protected CommandType _escapeCommandType;
+		[SerializeField] protected CommandType _moveNorthCommandType;
+		[SerializeField] protected CommandType _moveSouthCommandType;
+		[SerializeField] protected CommandType _moveEastCommandType;
+		[SerializeField] protected CommandType _moveWestCommandType;
+		[SerializeField] protected CommandType _restCommandType;
+
+		public static class CommandTypes {
+			public static CommandType attack    => instance._attackCommandType;
+			public static CommandType defense   => instance._defenseCommandType;
+			public static CommandType heal      => instance._healCommandType;
+			public static CommandType dodge     => instance._dodgeCommandType;
+			public static CommandType escape    => instance._escapeCommandType;
+			public static CommandType moveNorth => instance._moveNorthCommandType;
+			public static CommandType moveSouth => instance._moveSouthCommandType;
+			public static CommandType moveWest  => instance._moveWestCommandType;
+			public static CommandType moveEast  => instance._moveEastCommandType;
+			public static CommandType rest      => instance._restCommandType;
+		}
+
+		private void Awake() => instance = this;
+
+		public static IReadOnlyList<CommandType>                               commandTypes    { get; private set; }
+		public static IReadOnlyList<Command>                                   commands        { get; private set; }
+		public static IReadOnlyDictionary<CommandType, IReadOnlyList<Command>> commandsPerType { get; private set; }
+		public static IReadOnlyList<FoeType>                                   foeTypes        { get; private set; }
 
 		public static IEnumerator Load() {
 			commands = DataFactory.LoadCommands().ToArray();
-			attackCommands = commands.Where(t => t.type.name == Constants.commandTypeAttack).ToArray();
-			defenseCommands = commands.Where(t => t.type.name == Constants.commandTypeDefense).ToArray();
-			dodgeCommands = commands.Where(t => t.type.name == Constants.commandTypeDodge).ToArray();
-			healCommands = commands.Where(t => t.type.name == Constants.commandTypeHeal).ToArray();
 			yield return null;
 			commandTypes = commands.Select(t => t.type).Distinct().ToList();
+			yield return null;
+			commandsPerType = commandTypes.ToDictionary(t => t, t => (IReadOnlyList<Command>)commands.Where(command => command.type == t).ToList());
 			yield return null;
 			foeTypes = DataFactory.LoadFoeTypes().ToList();
 			yield return null;

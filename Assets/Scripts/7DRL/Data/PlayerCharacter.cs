@@ -8,29 +8,40 @@ using Utils.Extensions;
 
 namespace _7DRL.Data {
 	[Serializable]
-	public class PlayerCharacter : CharacterBase {
-		[SerializeField] protected List<int> _letterPowers = new List<int>();
-		[SerializeField] protected string    _currentCommandLetters;
-		[SerializeField] protected string    _currentCommandMissingLetters;
-		[SerializeField] protected Command   _advisedCurrentCommand;
+	public class PlayerCharacter : CharacterBase, IDungeonCrawler {
+		[SerializeField] protected List<int>     _letterPowers;
+		[SerializeField] protected string        _currentCommandLetters;
+		[SerializeField] protected string        _currentCommandMissingLetters;
+		[SerializeField] protected Command       _advisedCurrentCommand;
+		[SerializeField] protected LetterReserve _letterReserve;
+		[SerializeField] protected Vector2Int    _dungeonPosition;
 
-		public override string name                         => "Player";
-		public override string currentCommandLetters        => _currentCommandLetters;
-		public override string currentCommandMissingLetters => _currentCommandMissingLetters;
+		public override string             name                         => "Player";
+		public override string             currentCommandLetters        => _currentCommandLetters;
+		public override string             currentCommandMissingLetters => _currentCommandMissingLetters;
+		public          IReadOnlyList<int> letterPowers                 => _letterPowers;
+		public          Command            advisedCurrentCommand        => _advisedCurrentCommand;
+		public          LetterReserve      letterReserve                => _letterReserve;
 
-		public IEnumerable<Command> learnedCombatCommands => _knownCommands.Where(t => t.type.usedInCombat);
-		public IReadOnlyList<int>   letterPowers          => _letterPowers;
-		public Command              advisedCurrentCommand => _advisedCurrentCommand;
+		public Vector2Int dungeonPosition {
+			get => _dungeonPosition;
+			set => _dungeonPosition = value;
+		}
 
-		public PlayerCharacter() : this(1, Constants.Player.initialMaxHealth, Array.Empty<Command>()) { }
+		public PlayerCharacter(IEnumerable<int> defaultLetterPowers, IReadOnlyDictionary<char, int> playerInitialLetters, IEnumerable<Command> playerInitialCommands) : base(1,
+			RlConstants.Player.initialMaxHealth, playerInitialCommands) {
+			_letterPowers = new List<int>(defaultLetterPowers);
+			_letterReserve = new LetterReserve();
+			playerInitialLetters.ForEach(t => _letterReserve.Add(t.Key, t.Value));
+			_dungeonPosition = Vector2Int.zero;
+		}
 
 		public void LearnCommand(Command command) => _knownCommands.Add(command);
 		public void SetLetterPowers(IEnumerable<int> letterPowers) => _letterPowers = new List<int>(letterPowers);
-		public PlayerCharacter(int level, int maxHealth, IEnumerable<Command> knownCommands) : base(level, maxHealth, knownCommands) { }
 
-		public void SetCurrentCommand(string currentCommand) {
+		public void SetCurrentCommand(string currentCommand, CommandType.Location location) {
 			_currentCommandLetters = currentCommand;
-			_advisedCurrentCommand = string.IsNullOrEmpty(currentCommand) ? null : _knownCommands.FirstOrDefault(t => t.inputName.StartsWith(currentCommand));
+			_advisedCurrentCommand = string.IsNullOrEmpty(currentCommand) ? null : _knownCommands.FirstOrDefault(t => t.inputName.StartsWith(currentCommand) && t.type.IsUsable(location));
 			_currentCommandMissingLetters = _advisedCurrentCommand?.inputName.Substring(currentCommand.Length) ?? string.Empty;
 			onCurrentCommandChanged.Invoke();
 		}
@@ -41,8 +52,8 @@ namespace _7DRL.Data {
 			return string.Empty;
 		}
 
-		public bool TryRecognizeCurrentCommand(out Command recognizedCommand) => _knownCommands.TryFirst(t => t.inputName == _currentCommandLetters, out recognizedCommand);
 		public override int GetCommandPower(Command command) => command.type.FixPower(TextUtils.GetInputValue(command.inputName, _letterPowers));
 		public override bool TryGetCurrentCommand(out Command command) => (command = advisedCurrentCommand) != null;
+		public bool TryGetCurrentCommandIfComplete(out Command command) => TryGetCurrentCommand(out command) && command.inputName == _currentCommandLetters;
 	}
 }

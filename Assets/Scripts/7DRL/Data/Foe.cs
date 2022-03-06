@@ -44,7 +44,7 @@ namespace _7DRL.Data {
 
 		public override bool TryGetCurrentCommand(out Command command) {
 			command = currentCommand;
-			return !dead;
+			return command != null && !dead;
 		}
 	}
 }

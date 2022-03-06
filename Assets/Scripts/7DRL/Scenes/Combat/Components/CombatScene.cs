@@ -12,7 +12,6 @@ public class CombatScene : MonoBehaviour {
 	private void Update() {
 		var worldScreenHeight = (float)(CameraUtils.main.orthographicSize * 2.0);
 		var worldScreenWidth = worldScreenHeight / Display.main.renderingHeight * Display.main.renderingWidth;
-		ResizeBackground(worldScreenHeight, worldScreenWidth);
 		RelocatePlayerAndFoes(worldScreenWidth);
 	}
 
@@ -21,14 +20,6 @@ public class CombatScene : MonoBehaviour {
 		for (var index = 0; index < _foesPositions.Length; index++) {
 			_foesPositions[index].position = new Vector3(worldScreenWidth * (.05f + index * .4f / _foesPositions.Length), 0, 0);
 		}
-	}
-
-	private void ResizeBackground(float worldScreenHeight, float worldScreenWidth) {
-		var backgroundSprite = _background.sprite;
-		var heightScale = worldScreenHeight / backgroundSprite.bounds.size.y;
-		var widthScale = worldScreenWidth / backgroundSprite.bounds.size.x;
-		var scale = Mathf.Max(heightScale, widthScale) + .001f;
-		_background.transform.localScale = new Vector3(scale, scale, 1);
 	}
 
 	private void OnDrawGizmos() {

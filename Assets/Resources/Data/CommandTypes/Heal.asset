@@ -15,5 +15,5 @@ MonoBehaviour:
   _id:
     _value: 3
   _descriptionPattern: Heals <b>[POW]</b> HP.
-  _usedInCombat: 1
-  _usedOnMap: 1
+  _powerMultiplier: 1
+  _usedInLocations: -1

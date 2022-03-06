@@ -15,6 +15,5 @@ MonoBehaviour:
   _id:
     _value: 4
   _descriptionPattern: Gives <b>[POW]</b> new random letters.
-  _powerMultiplier: 0.1
-  _usedInCombat: 1
-  _usedOnMap: 1
+  _powerMultiplier: 0.2
+  _usedInLocations: -1

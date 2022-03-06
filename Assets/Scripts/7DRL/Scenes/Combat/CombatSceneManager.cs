@@ -11,7 +11,7 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 
 namespace _7DRL.Scenes.Combat {
-	public class CombatSceneManager : MonoBehaviour {
+	public class CombatSceneManager : SceneManager {
 		[SerializeField] protected CombatUi        _ui;
 		[SerializeField] protected CombatScene     _combatScene;
 		[SerializeField] protected CombatCharacter _combatCharacterPrefab;
@@ -19,15 +19,18 @@ namespace _7DRL.Scenes.Combat {
 		private Encounter                                  encounter        { get; set; }
 		private Dictionary<CharacterBase, CombatCharacter> combatCharacters { get; } = new Dictionary<CharacterBase, CombatCharacter>();
 
-		[ContextMenu("Init Random")] public void InitRandom() => Init(GameFactory.GenerateEncounter(Random.Range(1, 199)));
+		[ContextMenu("Init Random")]
+		public void InitRandom() => Init(GameFactory.GenerateEncounter(Vector2Int.zero, Encounter.Level.Weak, new[] { Random.Range(1, 199) },
+			Game.instance.defaultLetterPowers.Select((t, i) => (t, i)).ToDictionary(t => (char)('A' + t.i), t => t.t)));
 
-		private void Init(Encounter encounter) {
+		public void Init(Encounter encounter) {
 			this.encounter = encounter;
-			StartCoroutine(DoBattle());
+			InitBattle();
 		}
 
+		[ContextMenu("StartBattle")] public void StartBattle() => StartCoroutine(DoBattle());
+
 		private IEnumerator DoBattle() {
-			InitBattle();
 			while (!IsBattleOver()) {
 				yield return StartCoroutine(DoPlayerTurn());
 				foreach (var foe in encounter.foes) {
@@ -35,6 +38,12 @@ namespace _7DRL.Scenes.Combat {
 						yield return StartCoroutine(DoFoeTurn(foe));
 					}
 				}
+			}
+
+			if (Game.instance.playerCharacter.dead) GameEvents.onPlayerDead.Invoke();
+			else {
+				GameEvents.onEncounterDefeated.Invoke(encounter);
+				GameEvents.onBattleEnded.Invoke();
 			}
 		}
 
@@ -76,15 +85,14 @@ namespace _7DRL.Scenes.Combat {
 			TextInputManager.ClearInput();
 			TextInputManager.StartListening();
 			var lastInput = string.Empty;
-			Game.instance.playerCharacter.SetCurrentCommand(string.Empty);
-			Command recognizedCommand = null;
-			while (recognizedCommand == null) {
+			Game.instance.playerCharacter.SetCurrentCommand(string.Empty, CommandType.Location.Combat);
+			Command command = null;
+			var hasCommand = false;
+			while (!hasCommand) {
 				if (TextInputManager.currentInput != lastInput) {
 					lastInput = TextInputManager.currentInput;
-					Game.instance.playerCharacter.SetCurrentCommand(lastInput);
-					if (Game.instance.playerCharacter.TryRecognizeCurrentCommand(out recognizedCommand)) {
-						Debug.Log("Launch " + recognizedCommand.name);
-					}
+					Game.instance.playerCharacter.SetCurrentCommand(lastInput, CommandType.Location.Combat);
+					hasCommand = Game.instance.playerCharacter.TryGetCurrentCommandIfComplete(out command);
 				}
 				yield return null;
 			}
@@ -92,10 +100,10 @@ namespace _7DRL.Scenes.Combat {
 			yield return new WaitForSeconds(1);
 
 			var target = encounter.foes.First(t => !t.dead);
-			var power = Game.instance.playerCharacter.GetCommandPower(recognizedCommand);
-			yield return StartCoroutine(ResolveCommand(Game.instance.playerCharacter, target, recognizedCommand, power));
+			var power = Game.instance.playerCharacter.GetCommandPower(command);
+			yield return StartCoroutine(ResolveCommand(Game.instance.playerCharacter, target, command, power));
 
-			Game.instance.playerCharacter.SetCurrentCommand(string.Empty);
+			Game.instance.playerCharacter.SetCurrentCommand(string.Empty, CommandType.Location.Combat);
 		}
 
 		private IEnumerator ResolveCommand(CharacterBase source, CharacterBase target, Command command, int power) {
@@ -103,8 +111,8 @@ namespace _7DRL.Scenes.Combat {
 		}
 
 		private Func<CharacterBase, CharacterBase, int, IEnumerator> GetCommandAction(Command command) {
-			if (command.type.name == Constants.commandTypeAttack) return ResolveAttackCommand;
-			if (command.type.name == Constants.commandTypeDefense) return ResolveDefenseCommand;
+			if (command.type == Memory.CommandTypes.attack) return ResolveAttackCommand;
+			if (command.type == Memory.CommandTypes.defense) return ResolveDefenseCommand;
 			Debug.LogError($"Command type {command.type.name} is not handled");
 			return ResolveDefaultCommand;
 		}

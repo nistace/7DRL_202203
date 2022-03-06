@@ -13,16 +13,16 @@ namespace _7DRL.Data {
 		[SerializeField] protected int           _level;
 		[SerializeField] protected List<Command> _knownCommands;
 
-		public bool dead  => _health <= 0;
-		public int  level => _level;
-
-		public abstract string name                         { get; }
-		public          string completeName                 => $"{name} lvl {_level}";
-		public abstract string currentCommandLetters        { get; }
-		public abstract string currentCommandMissingLetters { get; }
-		public          int    health                       => _health;
-		public          int    maxHealth                    => _maxHealth;
-		public          int    armor                        => _armor;
+		public          bool                   dead                         => _health <= 0;
+		public          int                    level                        => _level;
+		public abstract string                 name                         { get; }
+		public          string                 completeName                 => $"{name} lvl {_level}";
+		public abstract string                 currentCommandLetters        { get; }
+		public abstract string                 currentCommandMissingLetters { get; }
+		public          int                    health                       => _health;
+		public          int                    maxHealth                    => _maxHealth;
+		public          int                    armor                        => _armor;
+		public          IReadOnlyList<Command> knownCommands                => _knownCommands;
 
 		public UnityEvent onHealthOrArmorChanged  { get; } = new UnityEvent();
 		public UnityEvent onCurrentCommandChanged { get; } = new UnityEvent();

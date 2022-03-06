@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Utils.Extensions;
@@ -20,11 +19,9 @@ namespace _7DRL.Data {
 					Debug.LogError($"Type {csvLine[columns["Type"]]} not found for command {commandName}. Command skipped");
 					continue;
 				}
+				var commandOrder = int.TryParse(csvLine[columns["Order"]], out var parsedOrder) ? parsedOrder : 0;
 
-				result.Add(new Command(commandName, commandType));
-			}
-			if (result.TryFirst(t => result.Any(u => t != u && t.inputName.IndexOf(u.inputName, StringComparison.Ordinal) >= 0), out var notUnique)) {
-				Debug.Log($"{notUnique.inputName} contains another command");
+				result.Add(new Command(commandName, commandType, commandOrder));
 			}
 			return result;
 		}
