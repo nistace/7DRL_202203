@@ -1,0 +1,34 @@
+{
+    "name": "Controls",
+    "maps": [
+        {
+            "name": "Main",
+            "id": "61781f5c-df1a-4872-b695-e021a8f20121",
+            "actions": [
+                {
+                    "name": "KnownCommands",
+                    "type": "Button",
+                    "id": "c8616259-7488-4c34-91b9-0642cd66212b",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "b039ec47-d12d-43d5-a8a1-2dfd762e812a",
+                    "path": "<Keyboard>/tab",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "KnownCommands",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}

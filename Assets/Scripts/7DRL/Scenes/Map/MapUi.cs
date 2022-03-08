@@ -3,15 +3,18 @@ using UnityEngine;
 
 namespace _7DRL.Scenes.Map {
 	public class MapUi : MonoBehaviour {
-		[SerializeField] protected WindRoseUi       _windRose;
-		[SerializeField] protected CommandTrackerUi _commandTracker;
+		[SerializeField] protected WindRoseUi     _windRose;
+		[SerializeField] protected MapCharacterUi _mapCharacter;
+		[SerializeField] protected GameTurnUi     _gameTurn;
 
-		public CommandTrackerUi commandTracker => _commandTracker;
-		public WindRoseUi       windRose       => _windRose;
+		public MapCharacterUi mapCharacter => _mapCharacter;
+		public WindRoseUi     windRose     => _windRose;
+		public GameTurnUi     gameTurn     => _gameTurn;
 
 		public void Init(PlayerCharacter character) {
+			_gameTurn.Init();
 			_windRose.Set(character);
-			_commandTracker.Set(character);
+			_mapCharacter.Set(character);
 		}
 	}
 }

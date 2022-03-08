@@ -13,7 +13,7 @@ namespace _7DRL.Games {
 		public static IEnumerator CreateGame(UnityAction<Game> callback) {
 			var letterPowers = GenerateDefaultLetterPowers();
 			yield return null;
-			var playerInitialCommands = Memory.commandTypes.Select(type => Memory.commands.Where(command => command.type == type).Random()).ToArray();
+			var playerInitialCommands = GeneratePlayerInitialCommands();
 			yield return null;
 			var playerInitialLetters = GeneratePlayerInitialLetters(letterPowers, playerInitialCommands);
 			yield return null;
@@ -22,6 +22,9 @@ namespace _7DRL.Games {
 			callback?.Invoke(new Game(letterPowers, playerInitialCommands, playerInitialLetters, map));
 		}
 
+		private static IReadOnlyCollection<Command> GeneratePlayerInitialCommands() => Memory.commandTypes.Where(t => t.initialPlayerAmount > 0)
+			.SelectMany(t => Memory.commandsPerType[t].ToList().Shuffled().Take(t.initialPlayerAmount)).ToList();
+
 		private static Dictionary<char, int> GeneratePlayerInitialLetters(Dictionary<char, int> letterPowers, IEnumerable<Command> playerInitialCommands) {
 			var playerInitialLetters = (1 + 'Z' - 'A').CreateArray(t => (char)('A' + t)).ToDictionary(t => t, t => 0);
 			foreach (var letterPower in letterPowers) {
@@ -29,7 +32,7 @@ namespace _7DRL.Games {
 			}
 			foreach (var knownCommand in playerInitialCommands) {
 				foreach (var letter in knownCommand.inputName) {
-					playerInitialLetters[letter] += RlConstants.Player.initialLettersPerKnownCommands;
+					playerInitialLetters[letter] += Mathf.RoundToInt(RlConstants.Player.initialLettersPerKnownCommands * knownCommand.type.initialLetterAmountCoefficient);
 				}
 			}
 			return playerInitialLetters;
@@ -48,10 +51,9 @@ namespace _7DRL.Games {
 		private static Encounter GenerateEncounter(Vector2Int position, float distanceRatio, IReadOnlyDictionary<char, int> letterPowers) {
 			var level = (Encounter.Level)(Mathf.Clamp01(Mathf.Clamp01(distanceRatio) - .01f) * EnumUtils.SizeOf<Encounter.Level>() - 1);
 
-			var countFoes = Mathf.Clamp(Random.Range((int)level, (int)level + 3), 1, 3);
-
-			var minSeed = Mathf.Max(0, (int)level * 3 - countFoes) * 100;
-			var maxSeed = minSeed + 150;
+			var countFoes = Mathf.Clamp((int)(level + 1), 1, 3);
+			var minSeed = (int)level * 100;
+			var maxSeed = Mathf.FloorToInt(minSeed + 100 + 100 * (distanceRatio * (EnumUtils.SizeOf<Encounter.Level>() - 1) % 1));
 
 			return GenerateEncounter(position, level, countFoes.CreateArray(t => Random.Range(minSeed, maxSeed)), letterPowers);
 		}
@@ -60,9 +62,11 @@ namespace _7DRL.Games {
 			new Encounter(level, position, foeSeeds.Select(t => GenerateFoe(t, letterPowers)).ToArray());
 
 		private static Foe GenerateFoe(int seed, IReadOnlyDictionary<char, int> letterPowers) {
-			seed %= 1000;
+			seed = Mathf.Clamp(seed, 1, 999);
 			var type = Memory.foeTypes[seed % Memory.foeTypes.Count];
 			var level = 1 + seed / 100;
+			var health = RlConstants.Foes.initialMaxHealthCoefficient * TextUtils.GetInputValue(type.inputName, letterPowers) * level;
+			var powerCoefficient = 1 + (level - 2f) / 10;
 			var commands = new HashSet<Command>();
 			if (TryGenerateFoeCommands(seed + RlConstants.magicNumber, 1 + Mathf.FloorToInt(level / 2f), Memory.commandsPerType[Memory.CommandTypes.attack], out var attackCommands))
 				commands.AddAll(attackCommands);
@@ -72,7 +76,7 @@ namespace _7DRL.Games {
 				commands.AddAll(dodgeCommands);
 			if (TryGenerateFoeCommands(seed + RlConstants.magicNumber, Mathf.FloorToInt(level / 4f), Memory.commandsPerType[Memory.CommandTypes.heal], out var healCommands))
 				commands.AddAll(healCommands);
-			return new Foe(type, level, RlConstants.Foes.initialMaxHealthCoefficient * TextUtils.GetInputValue(type.inputName, letterPowers) * level, 1, commands);
+			return new Foe(type, level, health, powerCoefficient, commands);
 		}
 
 		private static bool TryGenerateFoeCommands(int seed, int count, IReadOnlyList<Command> fromList, out ISet<Command> commands) {

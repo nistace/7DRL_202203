@@ -25,12 +25,12 @@ namespace _7DRL.TextInput {
 		private static IEnumerator ListenInput() {
 			listening = true;
 			while (listening) {
-				if (currentInput.Length > 0 && Input.GetKeyDown(KeyCode.Backspace)) {
+				if (currentInput.Length > 0 && UnityEngine.Input.GetKeyDown(KeyCode.Backspace)) {
 					currentInput = currentInput.Substring(0, currentInput.Length - 1);
 					onCurrentInputChanged.Invoke(currentInput);
 				}
-				else if (!string.IsNullOrEmpty(Input.inputString) && Regex.IsMatch(Input.inputString, "^[a-zA-Z]$")) {
-					currentInput += Input.inputString.ToUpper();
+				else if (!string.IsNullOrEmpty(UnityEngine.Input.inputString) && Regex.IsMatch(UnityEngine.Input.inputString, "^[a-zA-Z]$")) {
+					currentInput += UnityEngine.Input.inputString.ToUpper();
 					onCurrentInputChanged.Invoke(currentInput);
 				}
 				yield return null;

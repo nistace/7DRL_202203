@@ -16,4 +16,6 @@ MonoBehaviour:
     _value: 2
   _descriptionPattern: Adds <b>[POW]</b> armor.
   _powerMultiplier: 1.1
+  _minPower: 1
+  _maxPower: 2147483647
   _usedInLocations: 1

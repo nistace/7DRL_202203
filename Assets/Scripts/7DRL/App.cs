@@ -2,6 +2,7 @@
 using System.Linq;
 using _7DRL.Data;
 using _7DRL.Games;
+using _7DRL.Input.Controls;
 using _7DRL.MiscConstants;
 using _7DRL.Scenes;
 using _7DRL.Scenes.Combat;
@@ -25,9 +26,9 @@ namespace _7DRL {
 			_loadingScreen.SetVisible();
 			_combatManager.Disable();
 			_mapManager.Disable();
-			GameEvents.onEncounterAtPlayerPosition.AddListenerOnce(StartBattle);
-			GameEvents.onEncounterDefeated.AddListenerOnce(HandleBattleEnded);
-
+			GameEvents.onEncounterAtPlayerPosition.AddListenerOnce(HandleEncounterAtPlayerPosition);
+			GameEvents.onEncounterDefeated.AddListenerOnce(HandleEncounterDefeated);
+			GameEvents.onPlayerFledBattle.AddListenerOnce(HandlePlayerFled);
 			StartCoroutine(Init());
 		}
 
@@ -39,7 +40,7 @@ namespace _7DRL {
 			yield return StartCoroutine(Memory.Load());
 			_loadingScreen.SetProgress(.5f);
 			yield return StartCoroutine(GameFactory.CreateGame(t => Game.instance = t));
-			CommonGameUi.playerLetterReserve.Set(Game.instance.playerCharacter.letterReserve);
+			CommonGameUi.Init(Game.instance.playerCharacter);
 			_loadingScreen.SetProgress(.8f);
 			yield return null;
 			_currentGame = Game.instance;
@@ -47,15 +48,21 @@ namespace _7DRL {
 			_loadingScreen.SetProgress(1);
 			yield return null;
 			yield return StartCoroutine(MoveToMap());
+			Inputs.controls.Enable();
 			_loadingScreen.Hide();
 		}
 
 		private IEnumerator MoveToMap() {
-			yield return StartCoroutine(ChangeScene(_mapManager));
+			_loadingScreen.SetProgress(0);
+			yield return StartCoroutine(_loadingScreen.DoFadeIn());
+			if (currentScene) currentScene.Disable();
+			currentScene = _mapManager;
+			_mapManager.Enable();
+			yield return StartCoroutine(_loadingScreen.DoFadeOut());
 			_mapManager.Continue();
 		}
 
-		private void HandleBattleEnded(Encounter defeatedEncounter) {
+		private void HandleEncounterDefeated(Encounter defeatedEncounter) {
 			if (defeatedEncounter.level == Encounter.Level.Boss) {
 				Debug.Log("You win !");
 			}
@@ -64,22 +71,19 @@ namespace _7DRL {
 			}
 		}
 
-		private void StartBattle(Encounter encounter) => StartCoroutine(MoveToCombat(encounter));
+		private void HandleEncounterAtPlayerPosition(Encounter encounter) => StartCoroutine(MoveToCombat(encounter));
+		private void HandlePlayerFled() => StartCoroutine(MoveToMap());
 
 		private IEnumerator MoveToCombat(Encounter encounter) {
-			yield return StartCoroutine(ChangeScene(_combatManager));
-			_combatManager.Init(encounter);
-			yield return new WaitForSeconds(1);
-			_combatManager.StartBattle();
-		}
-
-		private IEnumerator ChangeScene(SceneManager newScene) {
 			_loadingScreen.SetProgress(0);
 			yield return StartCoroutine(_loadingScreen.DoFadeIn());
 			if (currentScene) currentScene.Disable();
-			currentScene = newScene;
+			currentScene = _combatManager;
+			_combatManager.Init(encounter);
 			if (currentScene) currentScene.Enable();
+			yield return new WaitForSeconds(.3f);
 			yield return StartCoroutine(_loadingScreen.DoFadeOut());
+			_combatManager.StartBattle();
 		}
 	}
 }

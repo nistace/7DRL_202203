@@ -53,6 +53,7 @@ MonoBehaviour:
   _commandText: {fileID: 1367904084323528329}
   _commandDescriptionText: {fileID: 1367904083443955082}
   _player: 0
+  _valid: 1
 --- !u!1001 &7255351038282408639
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -319,7 +320,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8524164899237926709, guid: f5bf31941a82eca4781e19558745e6b8, type: 3}
       propertyPath: m_fontSize
-      value: 30
+      value: 29.05
       objectReference: {fileID: 0}
     - target: {fileID: 8524164899237926709, guid: f5bf31941a82eca4781e19558745e6b8, type: 3}
       propertyPath: m_fontSizeMax

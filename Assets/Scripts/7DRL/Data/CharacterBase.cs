@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
+using Random = UnityEngine.Random;
 
 namespace _7DRL.Data {
 	[Serializable]
@@ -10,6 +11,8 @@ namespace _7DRL.Data {
 		[SerializeField] protected int           _maxHealth;
 		[SerializeField] protected int           _health;
 		[SerializeField] protected int           _armor;
+		[SerializeField] protected int           _dodge;
+		[SerializeField] protected int           _escape;
 		[SerializeField] protected int           _level;
 		[SerializeField] protected List<Command> _knownCommands;
 
@@ -23,8 +26,13 @@ namespace _7DRL.Data {
 		public          int                    maxHealth                    => _maxHealth;
 		public          int                    armor                        => _armor;
 		public          IReadOnlyList<Command> knownCommands                => _knownCommands;
+		public          int                    dodge                        => _dodge;
+		public          int                    escape                       => _escape;
 
-		public UnityEvent onHealthOrArmorChanged  { get; } = new UnityEvent();
+		public UnityEvent onHealthChanged         { get; } = new UnityEvent();
+		public UnityEvent onArmorChanged          { get; } = new UnityEvent();
+		public UnityEvent onDodgeChanceChanged    { get; } = new UnityEvent();
+		public UnityEvent onEscapeChanceChanged   { get; } = new UnityEvent();
 		public UnityEvent onCurrentCommandChanged { get; } = new UnityEvent();
 
 		protected CharacterBase(int level, int maxHealth, IEnumerable<Command> knownCommands) {
@@ -34,27 +42,57 @@ namespace _7DRL.Data {
 			_knownCommands = knownCommands.ToList();
 		}
 
+		public abstract int GetCommandPower(Command command);
+		public abstract bool TryGetCurrentCommand(out Command command);
+		public string GetCommandDescription(Command buildingCommand) => buildingCommand.type.GetDescription(GetCommandPower(buildingCommand));
+
 		public void Damage(int amount) {
 			if (_health == 0) return;
 			var lostArmor = Mathf.Min(amount, armor);
 			var lostHealth = Mathf.Min(amount - lostArmor, health);
-			SetHealthAndArmor(health - lostHealth, armor - lostArmor);
+			SetHealth(health - lostHealth);
+			SetArmor(armor - lostArmor);
 		}
 
-		public void Heal(int amount) {
-			if (_health == _maxHealth) return;
-			SetHealthAndArmor(Mathf.Min(_maxHealth, _health + amount), armor);
-		}
+		public void Heal(int amount) => SetHealth(Mathf.Min(_maxHealth, _health + amount));
+		public void AddArmor(int amount) => SetArmor(armor + amount);
 
-		public void AddArmor(int amount) => SetHealthAndArmor(health, armor + amount);
-
-		private void SetHealthAndArmor(int health, int armor) {
+		private void SetHealth(int health) {
+			if (_health == health) return;
 			_health = health;
-			_armor = armor;
-			onHealthOrArmorChanged.Invoke();
+			onHealthChanged.Invoke();
 		}
 
-		public abstract int GetCommandPower(Command command);
-		public abstract bool TryGetCurrentCommand(out Command command);
+		private void SetArmor(int armor) {
+			if (_armor == armor) return;
+			_armor = armor;
+			onArmorChanged.Invoke();
+		}
+
+		private void SetDodge(int amount) {
+			if (_dodge == amount) return;
+			_dodge = Mathf.Clamp(amount, 0, 100);
+			onDodgeChanceChanged.Invoke();
+		}
+
+		private void SetEscape(int amount) {
+			if (_escape == amount) return;
+			_escape = Mathf.Clamp(amount, 0, 100);
+			onEscapeChanceChanged.Invoke();
+		}
+
+		public void AddChanceToDodge(int amount) => SetDodge(_dodge + amount);
+		public void AddChanceToEscape(int amount) => SetEscape(_escape + amount);
+		public bool RollDodge() => Random.Range(0, 100) < _dodge;
+		public bool RollEscape() => Random.Range(0, 100) < _escape;
+		public void ResetChanceToDodge() => SetDodge(0);
+		public void ResetChanceToEscape() => SetEscape(0);
+		public void ResetArmor() => SetArmor(0);
+
+		public void ResetForBattle() {
+			ResetChanceToDodge();
+			ResetChanceToEscape();
+			ResetArmor();
+		}
 	}
 }

@@ -15,5 +15,8 @@ MonoBehaviour:
   _id:
     _value: 4
   _descriptionPattern: Gives <b>[POW]</b> new random letters.
-  _powerMultiplier: 0.2
+  _powerMultiplier: 0.06
+  _minPower: 1
+  _maxPower: 2147483647
   _usedInLocations: -1
+  _initialAmountCoefficient: 1

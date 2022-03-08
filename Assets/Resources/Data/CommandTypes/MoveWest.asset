@@ -16,4 +16,8 @@ MonoBehaviour:
     _value: 10
   _descriptionPattern: Move to the west.
   _powerMultiplier: 1
+  _minPower: 1
+  _maxPower: 1
   _usedInLocations: 2
+  _initialPlayerAmount: 1
+  _initialLetterAmountCoefficient: 2

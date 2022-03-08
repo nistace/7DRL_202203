@@ -16,4 +16,6 @@ MonoBehaviour:
     _value: 3
   _descriptionPattern: Heals <b>[POW]</b> HP.
   _powerMultiplier: 1
+  _minPower: 1
+  _maxPower: 2147483647
   _usedInLocations: -1

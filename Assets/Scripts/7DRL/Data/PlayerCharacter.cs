@@ -4,6 +4,7 @@ using System.Linq;
 using _7DRL.MiscConstants;
 using _7DRL.TextInput;
 using UnityEngine;
+using UnityEngine.Events;
 using Utils.Extensions;
 
 namespace _7DRL.Data {
@@ -23,6 +24,9 @@ namespace _7DRL.Data {
 		public          Command            advisedCurrentCommand        => _advisedCurrentCommand;
 		public          LetterReserve      letterReserve                => _letterReserve;
 
+		public UnityEvent onKnownCommandsChanged { get; } = new UnityEvent();
+		public UnityEvent onLetterPowersChanged  { get; } = new UnityEvent();
+
 		public Vector2Int dungeonPosition {
 			get => _dungeonPosition;
 			set => _dungeonPosition = value;
@@ -36,13 +40,22 @@ namespace _7DRL.Data {
 			_dungeonPosition = Vector2Int.zero;
 		}
 
-		public void LearnCommand(Command command) => _knownCommands.Add(command);
+		public void LearnCommand(Command command) {
+			_knownCommands.Add(command);
+			onKnownCommandsChanged.Invoke();
+		}
+
+		public void EnhanceLetterPower(char letter, float coefficient) {
+			_letterPowers[letter - 'A'] = Mathf.RoundToInt(coefficient * _letterPowers[letter - 'A']);
+			onLetterPowersChanged.Invoke();
+		}
+
 		public void SetLetterPowers(IEnumerable<int> letterPowers) => _letterPowers = new List<int>(letterPowers);
 
-		public void SetCurrentCommand(string currentCommand, CommandType.Location location) {
-			_currentCommandLetters = currentCommand;
-			_advisedCurrentCommand = string.IsNullOrEmpty(currentCommand) ? null : _knownCommands.FirstOrDefault(t => t.inputName.StartsWith(currentCommand) && t.type.IsUsable(location));
-			_currentCommandMissingLetters = _advisedCurrentCommand?.inputName.Substring(currentCommand.Length) ?? string.Empty;
+		public void SetCurrentCommand(string command, CommandType.Location location) {
+			_currentCommandLetters = command;
+			_advisedCurrentCommand = !string.IsNullOrEmpty(command) && _knownCommands.TryFirst(t => t.inputName.StartsWith(command) && t.type.IsUsable(location), out var advised) ? advised : null;
+			_currentCommandMissingLetters = _advisedCurrentCommand?.inputName.Substring(command.Length) ?? string.Empty;
 			onCurrentCommandChanged.Invoke();
 		}
 
@@ -54,6 +67,18 @@ namespace _7DRL.Data {
 
 		public override int GetCommandPower(Command command) => command.type.FixPower(TextUtils.GetInputValue(command.inputName, _letterPowers));
 		public override bool TryGetCurrentCommand(out Command command) => (command = advisedCurrentCommand) != null;
+
 		public bool TryGetCurrentCommandIfComplete(out Command command) => TryGetCurrentCommand(out command) && command.inputName == _currentCommandLetters;
+
+		public int CountOpportunitiesToPlay(Command command) {
+			var count = int.MaxValue;
+			for (var c = 'A'; c <= 'Z'; ++c) {
+				var charCount = command.inputName.Count(t => t == c);
+				if (charCount > 0) {
+					count = Mathf.Min(count, letterReserve[c] / charCount);
+				}
+			}
+			return count;
+		}
 	}
 }

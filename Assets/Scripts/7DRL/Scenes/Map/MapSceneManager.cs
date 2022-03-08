@@ -6,6 +6,7 @@ using _7DRL.Data;
 using _7DRL.Games;
 using _7DRL.MiscConstants;
 using _7DRL.TextInput;
+using _7DRL.Ui;
 using UnityEngine;
 using Utils.Extensions;
 using Utils.Libraries;
@@ -22,16 +23,9 @@ namespace _7DRL.Scenes.Map {
 		[SerializeField] protected float          _tokensSpeed = 1;
 		[SerializeField] protected MapUi          _ui;
 
-		private SpriteRenderer[,]                     pathChunks { get; set; }
-		private Dictionary<IDungeonCrawler, MapToken> tokens     { get; } = new Dictionary<IDungeonCrawler, MapToken>();
-
-		private enum Turn {
-			Player    = 0,
-			SolveMisc = 1,
-			Foe       = 2
-		}
-
-		private Turn turn { get; set; }
+		private SpriteRenderer[,]                     pathChunks             { get; set; }
+		private Dictionary<IDungeonCrawler, MapToken> tokens                 { get; } = new Dictionary<IDungeonCrawler, MapToken>();
+		private Vector2Int                            playerPreviousPosition { get; set; }
 
 		private void OnEnable() {
 			_cameraFollow.enabled = true;
@@ -48,15 +42,21 @@ namespace _7DRL.Scenes.Map {
 			DiscoverAround(game.playerCharacter.dungeonPosition);
 
 			_cameraFollow.target = tokens[game.playerCharacter].transform;
-			RevelPosition(game.playerCharacter.dungeonPosition);
+			RevealPosition(game.playerCharacter.dungeonPosition);
 			_cameraFollow.Jump();
 
 			_ui.Init(game.playerCharacter);
 			RefreshWindRose();
 
 			GameEvents.onEncounterDefeated.AddListenerOnce(HandleEncounterDefeated);
+			GameEvents.onPlayerFledBattle.AddListenerOnce(HandlePlayerFled);
+		}
 
-			turn = Turn.Player;
+		private void HandlePlayerFled() {
+			(playerPreviousPosition, Game.instance.playerCharacter.dungeonPosition) = (Game.instance.playerCharacter.dungeonPosition, playerPreviousPosition);
+			Game.instance.ChangeTurnStep(Game.TurnStep.Player);
+			tokens[Game.instance.playerCharacter].position = GridToWorldPosition(Game.instance.playerCharacter.dungeonPosition);
+			RefreshWindRose();
 		}
 
 		private void HandleEncounterDefeated(Encounter defeatedEncounter) {
@@ -114,26 +114,39 @@ namespace _7DRL.Scenes.Map {
 		public void Continue() => StartCoroutine(DoContinue());
 
 		private IEnumerator DoContinue() {
-			Encounter encounterAtPlayerPosition;
-			while (!CheckBattle(out encounterAtPlayerPosition)) {
-				if (turn == Turn.Player) yield return StartCoroutine(DoPlayerTurn());
-				else if (turn == Turn.SolveMisc) yield return StartCoroutine(DoSolveMiscTurn());
-				else if (turn == Turn.Foe) yield return StartCoroutine(DoFoeTurn());
-				turn = (Turn)((int)(turn + 1) % EnumUtils.SizeOf<Turn>());
+			CommonGameUi.SetToggleKnownCommandsEnabled(true);
+			CommonGameUi.knownCommands.SetValidCommands(CommandType.Location.Map);
+			while (!TryInterruptScene()) {
+				yield return StartCoroutine(DoCurrentTurnStep());
+				Game.instance.NextTurnStep();
 			}
-			GameEvents.onEncounterAtPlayerPosition.Invoke(encounterAtPlayerPosition);
 		}
 
-		private static bool CheckBattle(out Encounter encounter) => Game.instance.dungeonMap.TryGetEncounter(Game.instance.playerCharacter.dungeonPosition, out encounter);
+		private IEnumerator DoCurrentTurnStep() {
+			switch (Game.instance.turnStep) {
+				case Game.TurnStep.Player: return DoPlayerTurnStep();
+				case Game.TurnStep.SolveMisc: return DoSolveMiscTurnStep();
+				case Game.TurnStep.Foe: return DoFoeTurnStep();
+				default: throw new ArgumentOutOfRangeException();
+			}
+		}
 
-		private static IEnumerator DoSolveMiscTurn() {
+		private static bool TryInterruptScene() {
+			if (Game.instance.dungeonMap.TryGetEncounter(Game.instance.playerCharacter.dungeonPosition, out var encounter)) {
+				GameEvents.onEncounterAtPlayerPosition.Invoke(encounter);
+				return true;
+			}
+			return false;
+		}
+
+		private static IEnumerator DoSolveMiscTurnStep() {
 			if (Game.instance.dungeonMap.TryGetMisc(Game.instance.playerCharacter.dungeonPosition, out var misc)) {
 				Debug.Log("Misc: " + misc);
 				yield return null;
 			}
 		}
 
-		private IEnumerator DoPlayerTurn() {
+		private IEnumerator DoPlayerTurnStep() {
 			TextInputManager.ClearInput();
 			TextInputManager.StartListening();
 			var lastInput = string.Empty;
@@ -147,7 +160,7 @@ namespace _7DRL.Scenes.Map {
 					Game.instance.playerCharacter.SetCurrentCommand(lastInput, CommandType.Location.Map);
 					hasCommand = Game.instance.playerCharacter.TryGetCurrentCommandIfComplete(out command);
 					canExecuteCommand = hasCommand && CanExecute(command) || Game.instance.playerCharacter.TryGetCurrentCommand(out var advisedCommand) && CanExecute(advisedCommand);
-					_ui.commandTracker.valid = canExecuteCommand;
+					_ui.mapCharacter.commandTracker.valid = canExecuteCommand;
 				}
 				yield return null;
 			}
@@ -169,8 +182,12 @@ namespace _7DRL.Scenes.Map {
 			return true;
 		}
 
-		private IEnumerator DoFoeTurn() {
-			yield return new WaitForSeconds(1);
+		private IEnumerator DoFoeTurnStep() {
+			for (var wait = 0f; wait < .5f; wait += Time.deltaTime) {
+				_ui.gameTurn.progress = wait.Remap(0, .5f, 0, .25f);
+				yield return null;
+			}
+
 			foreach (var encounter in Game.instance.dungeonMap.encounters.ToArray()) {
 				var possibleMovements = Game.instance.dungeonMap.GetPossibleMovements(encounter.dungeonPosition, false).ToArray();
 				if (possibleMovements.Length > 0) {
@@ -178,7 +195,20 @@ namespace _7DRL.Scenes.Map {
 					StartCoroutine(MoveToken(encounter));
 				}
 			}
-			yield return new WaitForSeconds(2);
+
+			for (var wait = 0f; wait < .5f; wait += Time.deltaTime) {
+				_ui.gameTurn.progress = wait.Remap(0, .5f, .25f, .5f);
+				yield return null;
+			}
+
+			foreach (var encounter in Game.instance.dungeonMap.encounters) {
+				tokens[encounter].visible = pathChunks[encounter.dungeonPosition.x, encounter.dungeonPosition.y].enabled;
+			}
+
+			for (var wait = 0f; wait < 1; wait += Time.deltaTime) {
+				_ui.gameTurn.progress = wait.Remap(0, 1, .5f, 1);
+				yield return null;
+			}
 		}
 
 		private IEnumerator MoveToken(IDungeonCrawler source) {
@@ -195,12 +225,12 @@ namespace _7DRL.Scenes.Map {
 			pathChunks[gridPosition.x, gridPosition.y].enabled = true;
 			foreach (var direction in EnumUtils.Values<DungeonMap.Direction>()) {
 				if (Game.instance.dungeonMap.IsMovementAllowed(gridPosition, direction, true)) {
-					RevelPosition(gridPosition + DungeonMap.directionToV2[direction]);
+					RevealPosition(gridPosition + DungeonMap.directionToV2[direction]);
 				}
 			}
 		}
 
-		private void RevelPosition(Vector2Int gridPosition) {
+		private void RevealPosition(Vector2Int gridPosition) {
 			var position = new Vector2Int(gridPosition.x, gridPosition.y);
 			pathChunks[position.x, position.y].enabled = true;
 			if (Game.instance.dungeonMap.TryGetMisc(position, out var misc)) tokens[misc].visible = true;
@@ -230,8 +260,9 @@ namespace _7DRL.Scenes.Map {
 		private IEnumerator ResolveMoveEastCommand(int power) => ResolveMoveCommand(DungeonMap.Direction.East);
 
 		private IEnumerator ResolveMoveCommand(DungeonMap.Direction direction) {
+			playerPreviousPosition = Game.instance.playerCharacter.dungeonPosition;
 			Game.instance.playerCharacter.dungeonPosition += DungeonMap.directionToV2[direction];
-			RevelPosition(Game.instance.playerCharacter.dungeonPosition);
+			RevealPosition(Game.instance.playerCharacter.dungeonPosition);
 			pathChunks[Game.instance.playerCharacter.dungeonPosition.x, Game.instance.playerCharacter.dungeonPosition.y].enabled = true;
 			yield return StartCoroutine(MoveToken(Game.instance.playerCharacter));
 			DiscoverAround(Game.instance.playerCharacter.dungeonPosition);

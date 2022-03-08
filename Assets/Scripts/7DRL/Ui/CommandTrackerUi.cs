@@ -39,7 +39,7 @@ public class CommandTrackerUi : MonoBehaviour {
 	public void Set(CharacterBase character) {
 		this.character = character;
 		character.onCurrentCommandChanged.AddListenerOnce(Refresh);
-		character.onHealthOrArmorChanged.AddListenerOnce(HandleCharacterHealthChanged);
+		character.onHealthChanged.AddListenerOnce(HandleCharacterHealthChanged);
 		Refresh();
 	}
 
@@ -55,6 +55,6 @@ public class CommandTrackerUi : MonoBehaviour {
 		}
 
 		_commandText.text = $"<{activeLettersColor.ToHexaString(true)}>{character.currentCommandLetters}<{inactiveLettersColor.ToHexaString(true)}>{character.currentCommandMissingLetters}";
-		_commandDescriptionText.text = character.TryGetCurrentCommand(out var buildingCommand) ? buildingCommand.type.GetDescription(character.GetCommandPower(buildingCommand)) : string.Empty;
+		_commandDescriptionText.text = character.TryGetCurrentCommand(out var buildingCommand) ? character.GetCommandDescription(buildingCommand) : string.Empty;
 	}
 }

@@ -16,4 +16,6 @@ MonoBehaviour:
     _value: 1
   _descriptionPattern: Deals <b>[POW]</b> damages.
   _powerMultiplier: 1
+  _minPower: 1
+  _maxPower: 2147483647
   _usedInLocations: 1
