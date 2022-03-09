@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 64599dd65e6f42c5ac66c496c203301d, type: 3}
+  m_Name: Audio
+  m_EditorClassIdentifier: 
+  _id:
+    _value: 14
+  _defaultItem: {fileID: 0}
+  _orderIndex: 0
+  _itemNames:
+  - input.build.0
+  - input.complete.0
+  - input.invalid.0
+  - combat.attack.dead
+  - combat.attack.dodge
+  - combat.armor.0
+  - combat.attack.dead.0
+  - combat.attack.dodge.0
+  - combat.attack.hit.0
+  - combat.escape.fail.0
+  - combat.escape.success.0
+  - combat.heal.0
+  _items:
+  - {fileID: 8300000, guid: 55817a70222f5dc4fa172ea2f8ffde12, type: 3}
+  - {fileID: 8300000, guid: 8d88bb6b0122331458bbc915bb1c8c37, type: 3}
+  - {fileID: 8300000, guid: 03b5ce10dcb79164b8196b97bffe7fbe, type: 3}
+  - {fileID: 8300000, guid: 2a5d78fbfd81b444fa618235b50b98ee, type: 3}
+  - {fileID: 8300000, guid: 91729881bcde83b4c94f3987815f21d5, type: 3}
+  - {fileID: 8300000, guid: 6c714bc79d2e1864d90fe75d09edfe8d, type: 3}
+  - {fileID: 8300000, guid: 2a5d78fbfd81b444fa618235b50b98ee, type: 3}
+  - {fileID: 8300000, guid: 91729881bcde83b4c94f3987815f21d5, type: 3}
+  - {fileID: 8300000, guid: 9f3ee224ac4aa0f4caacc6e3c90311a1, type: 3}
+  - {fileID: 8300000, guid: ee9f273ceaa4b444a8bed9763d61fdf8, type: 3}
+  - {fileID: 8300000, guid: 8f49f600a3567744c86dd8409879cd7b, type: 3}
+  - {fileID: 8300000, guid: d9fa7c9eec6017147b45fb0c9f028b38, type: 3}

@@ -18,6 +18,8 @@ MonoBehaviour:
   _orderIndex: 0
   _itemNames:
   - ui.text.player.active
+  - ui.text.costless.active
+  - ui.text.costless.inactive
   - ui.text.player.inactive
   - ui.text.player.disabled
   - ui.text.foe.active
@@ -29,6 +31,8 @@ MonoBehaviour:
   - token.misc
   _items:
   - {r: 0, g: 0.16666675, b: 0.5, a: 1}
+  - {r: 1, g: 0.44313726, b: 0, a: 1}
+  - {r: 1, g: 0.44313726, b: 0, a: 0.4}
   - {r: 0, g: 0.16666675, b: 0.5, a: 0.4}
   - {r: 0.5019608, g: 0.5019608, b: 0.5019608, a: 0.4}
   - {r: 0.5019608, g: 0, b: 0, a: 1}

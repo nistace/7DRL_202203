@@ -1,4 +1,4 @@
-﻿using _7DRL.Data;
+﻿using _7DRL.GameComponents.TextAndLetters;
 using _7DRL.Games;
 using TMPro;
 using UnityEngine;

@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 using System.Linq;
-using _7DRL.Data;
+using _7DRL.GameComponents.Characters;
 using _7DRL.Games;
 using _7DRL.Input.Controls;
 using _7DRL.MiscConstants;
@@ -35,6 +35,8 @@ namespace _7DRL {
 		private IEnumerator Init() {
 			_loadingScreen.SetProgress(0);
 			Colors.LoadLibrary(Resources.LoadAll<ColorLibrary>("Libraries").FirstOrDefault());
+			AudioClips.LoadLibrary(Resources.LoadAll<AudioClipLibrary>("Libraries").FirstOrDefault());
+			Sprites.LoadLibrary(Resources.LoadAll<SpriteLibrary>("Libraries").FirstOrDefault());
 			_loadingScreen.SetProgress(.2f);
 			yield return null;
 			yield return StartCoroutine(Memory.Load());

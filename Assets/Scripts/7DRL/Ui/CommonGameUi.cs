@@ -1,5 +1,5 @@
-﻿using System;
-using _7DRL.Data;
+﻿using _7DRL.GameComponents.Characters;
+using _7DRL.GameComponents.TextAndLetters.Ui;
 using _7DRL.Input.Controls;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -11,9 +11,11 @@ namespace _7DRL.Ui {
 
 		[SerializeField] protected LetterReserveUi _playerLetterReserve;
 		[SerializeField] protected KnownCommandsUi _knownCommands;
+		[SerializeField] protected DialogPanelUi   _dialogPanel;
 
 		public static LetterReserveUi playerLetterReserve => instance?._playerLetterReserve;
 		public static KnownCommandsUi knownCommands       => instance?._knownCommands;
+		public static DialogPanelUi   dialogPanel         => instance?._dialogPanel;
 
 		private void Awake() {
 			instance = this;
@@ -21,6 +23,7 @@ namespace _7DRL.Ui {
 
 		private void Start() {
 			knownCommands.gameObject.SetActive(false);
+			dialogPanel.Hide();
 		}
 
 		public static void SetToggleKnownCommandsEnabled(bool enabled) {

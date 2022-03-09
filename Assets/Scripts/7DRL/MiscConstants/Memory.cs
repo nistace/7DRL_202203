@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using _7DRL.Data;
+using _7DRL.GameComponents.Characters;
+using _7DRL.GameComponents.Dungeons;
+using _7DRL.GameComponents.TextAndLetters;
 using UnityEngine;
 
 namespace _7DRL.MiscConstants {
@@ -34,10 +37,13 @@ namespace _7DRL.MiscConstants {
 
 		private void Awake() => instance = this;
 
-		public static IReadOnlyList<CommandType>                               commandTypes    { get; private set; }
-		public static IReadOnlyList<Command>                                   commands        { get; private set; }
-		public static IReadOnlyDictionary<CommandType, IReadOnlyList<Command>> commandsPerType { get; private set; }
-		public static IReadOnlyList<FoeType>                                   foeTypes        { get; private set; }
+		public static IReadOnlyList<CommandType>                                                   commandTypes          { get; private set; }
+		public static IReadOnlyList<Command>                                                       commands              { get; private set; }
+		public static IReadOnlyDictionary<CommandType, IReadOnlyList<Command>>                     commandsPerType       { get; private set; }
+		public static IReadOnlyList<FoeType>                                                       foeTypes              { get; private set; }
+		public static IReadOnlyDictionary<InteractionType, IReadOnlyCollection<InteractionOption>> interactionOptions    { get; private set; }
+		public static BookNameGenerator                                                            bookNameGenerator     { get; private set; }
+		public static ChestContentGenerator                                                        chestContentGenerator { get; private set; }
 
 		public static IEnumerator Load() {
 			commands = DataFactory.LoadCommands().ToArray();
@@ -47,6 +53,12 @@ namespace _7DRL.MiscConstants {
 			commandsPerType = commandTypes.ToDictionary(t => t, t => (IReadOnlyList<Command>)commands.Where(command => command.type == t).ToList());
 			yield return null;
 			foeTypes = DataFactory.LoadFoeTypes().ToList();
+			yield return null;
+			bookNameGenerator = DataFactory.LoadBookNameGenerator();
+			yield return null;
+			chestContentGenerator = DataFactory.LoadChestContentGenerator();
+			yield return null;
+			interactionOptions = DataFactory.LoadInteractionOptions();
 			yield return null;
 		}
 	}

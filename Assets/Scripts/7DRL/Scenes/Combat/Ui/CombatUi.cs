@@ -1,4 +1,4 @@
-﻿using _7DRL.Data;
+﻿using _7DRL.GameComponents.Characters;
 using UnityEngine;
 
 namespace _7DRL.Scenes.Combat.Ui {

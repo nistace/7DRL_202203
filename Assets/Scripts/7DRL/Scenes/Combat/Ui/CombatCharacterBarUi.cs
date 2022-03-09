@@ -1,4 +1,5 @@
-using _7DRL.Data;
+using _7DRL.GameComponents.Characters;
+using _7DRL.Ui;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;

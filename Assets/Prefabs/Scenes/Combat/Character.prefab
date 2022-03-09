@@ -440,6 +440,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _animator: {fileID: 8951368021032220655}
   _spriteRenderer: {fileID: 8951368020231908021}
+  _headTransform: {fileID: 8951368020556648873}
 --- !u!95 &8951368021032220655
 Animator:
   serializedVersion: 3

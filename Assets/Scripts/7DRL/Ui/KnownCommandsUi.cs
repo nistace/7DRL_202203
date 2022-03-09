@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using _7DRL.Data;
+using _7DRL.GameComponents.Characters;
+using _7DRL.GameComponents.TextAndLetters;
 using _7DRL.Games;
 using UnityEngine;
 using Utils.Extensions;

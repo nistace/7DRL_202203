@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Linq;
-using _7DRL.Data;
+using _7DRL.GameComponents.Characters;
+using _7DRL.GameComponents.Dungeons;
+using _7DRL.GameComponents.TextAndLetters;
 using _7DRL.MiscConstants;
 using TMPro;
 using UnityEngine;
@@ -18,6 +20,7 @@ namespace _7DRL.Scenes.Map {
 
 		public void Set(PlayerCharacter character) {
 			this.character = character;
+			this.character.onKnownCommandsChanged.AddListenerOnce(Refresh);
 			Refresh();
 		}
 

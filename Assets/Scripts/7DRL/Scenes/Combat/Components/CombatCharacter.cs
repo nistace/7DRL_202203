@@ -4,6 +4,7 @@ namespace _7DRL.Scenes.Combat {
 	public class CombatCharacter : MonoBehaviour {
 		[SerializeField] protected Animator       _animator;
 		[SerializeField] protected SpriteRenderer _spriteRenderer;
+		[SerializeField] protected Transform      _headTransform;
 
 		private static readonly int restartAnimParam       = Animator.StringToHash("Restart");
 		private static readonly int attackAnimParam        = Animator.StringToHash("Attack");
@@ -15,16 +16,20 @@ namespace _7DRL.Scenes.Combat {
 		private static readonly int escapeSuccessAnimParam = Animator.StringToHash("Escape_Success");
 		private static readonly int escapeFailAnimParam    = Animator.StringToHash("Escape_Fail");
 
+		public Transform headTransform => _headTransform;
+
 		public void Init(bool faceRight) {
-			_animator.SetTrigger(restartAnimParam);
-			_animator.ResetTrigger(attackAnimParam);
-			_animator.ResetTrigger(damagedAnimParam);
-			_animator.ResetTrigger(healAnimParam);
-			_animator.ResetTrigger(dodgeAnimParam);
-			_animator.ResetTrigger(defenseAnimParam);
-			_animator.ResetTrigger(escapeSuccessAnimParam);
-			_animator.ResetTrigger(escapeFailAnimParam);
-			_animator.SetBool(deadAnimParam, false);
+			if (_animator && _animator.runtimeAnimatorController) {
+				_animator.SetTrigger(restartAnimParam);
+				_animator.ResetTrigger(attackAnimParam);
+				_animator.ResetTrigger(damagedAnimParam);
+				_animator.ResetTrigger(healAnimParam);
+				_animator.ResetTrigger(dodgeAnimParam);
+				_animator.ResetTrigger(defenseAnimParam);
+				_animator.ResetTrigger(escapeSuccessAnimParam);
+				_animator.ResetTrigger(escapeFailAnimParam);
+				_animator.SetBool(deadAnimParam, false);
+			}
 			_spriteRenderer.color = Color.white;
 			_spriteRenderer.flipX = !faceRight;
 		}

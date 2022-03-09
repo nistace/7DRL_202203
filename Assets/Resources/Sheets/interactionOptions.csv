@@ -1,0 +1,34 @@
+Type,Charged,Command,End Of Sentence
+chest,1,open,the chest and get what's inside.
+chest,1,unlock,the chest and keep what's inside for yourself.
+chest,1,unlatch,the chest and get what's inside.
+chest,1,pick,the chest and keep what's inside for yourself.
+skip,0,leave,it alone and continue your journey.
+skip,0,continue,your journey without caring.
+skip,0,pursue,your journey without caring.
+read,1,read,
+read,1,study,
+read,1,consult,
+read,1,observe,
+skill,1,grasp,
+skill,1,master,
+skill,1,train,
+skill,1,acquire,
+fountain,1,drink,from the fountain.
+fountain,1,absord,the liquid that flows in the fountain.
+fountain,1,swallow,some of the liquid that flows in the fountain.
+fountain,1,consume,the precious liquid from the fountain.
+power,1,enhance,
+power,1,boost,
+power,1,refine,
+power,1,magnify,
+power,1,augment,
+power,1,upgrade,
+maxHealth,1,increase,your max health by 10 percents.
+maxHealth,1,train,to increase your max health by 10 percents.
+maxHealth,1,practice,to increase your max health by 10 percents.
+maxHealth,1,exercise,to increase your max health by 10 percents.
+portal,1,penetrate,the portal and meet on the other side.
+portal,1,step,in the portal and see what's on the other side.
+portal,1,dive,in the portal and see what's on the other side.
+portal,1,traverse,the portal and meet on the other side.

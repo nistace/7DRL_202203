@@ -2,13 +2,14 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using _7DRL.Data;
+using _7DRL.GameComponents.Characters;
+using _7DRL.GameComponents.TextAndLetters;
 using _7DRL.Games;
 using _7DRL.MiscConstants;
 using _7DRL.Scenes.Combat.Ui;
-using _7DRL.TextInput;
 using _7DRL.Ui;
 using UnityEngine;
+using Utils.Audio;
 using Utils.Extensions;
 using Random = UnityEngine.Random;
 
@@ -85,6 +86,7 @@ namespace _7DRL.Scenes.Combat {
 			combatCharacters.Add(Game.instance.playerCharacter, _combatScene.player);
 			_combatScene.player.Init(true);
 			for (var foeIndex = 0; foeIndex < encounter.foes.Length; foeIndex++) {
+				encounter.foes[foeIndex].ResetForBattle();
 				var foeCharacter = Instantiate(_combatCharacterPrefab, Vector3.zero, Quaternion.identity, _combatScene.GetFoePosition(foeIndex));
 				foeCharacter.transform.localPosition = Vector3.zero;
 				foeCharacter.Init(false);
@@ -111,28 +113,17 @@ namespace _7DRL.Scenes.Combat {
 		}
 
 		private IEnumerator DoPlayerTurn() {
-			TextInputManager.ClearInput();
-			TextInputManager.StartListening();
-			var lastInput = string.Empty;
-			Game.instance.playerCharacter.SetCurrentCommand(string.Empty, CommandType.Location.Combat);
+			var commands = Game.instance.playerCharacter.knownCommands.Where(t => t.type.IsUsable(CommandType.Location.Combat)).ToDictionary(t => t.inputName, t => t);
 			Command command = null;
-			var hasCommand = false;
-			while (!hasCommand) {
-				if (TextInputManager.currentInput != lastInput) {
-					lastInput = TextInputManager.currentInput;
-					Game.instance.playerCharacter.SetCurrentCommand(lastInput, CommandType.Location.Combat);
-					hasCommand = Game.instance.playerCharacter.TryGetCurrentCommandIfComplete(out command);
-				}
-				yield return null;
-			}
-			TextInputManager.StopListening();
+			Game.instance.playerCharacter.SetCurrentCommand(string.Empty, CommandType.Location.Combat);
+			yield return StartCoroutine(TextInputManager.ListenUntilResult(commands, OnPlayerInputChanged, t => command = t));
 			yield return new WaitForSeconds(1);
-
 			var target = encounter.foes.First(t => !t.dead);
 			yield return StartCoroutine(ResolveCommand(Game.instance.playerCharacter, target, command));
-
 			Game.instance.playerCharacter.SetCurrentCommand(string.Empty, CommandType.Location.Combat);
 		}
+
+		private static void OnPlayerInputChanged(string input, Command preferredCommand) => Game.instance.playerCharacter.SetCurrentCommand(input, CommandType.Location.Combat);
 
 		private IEnumerator ResolveCommand(CharacterBase source, CharacterBase target, Command command) {
 			yield return StartCoroutine(GetCommandAction(command)(source, target, source.GetCommandPower(command)));
@@ -144,29 +135,52 @@ namespace _7DRL.Scenes.Combat {
 			if (command.type == Memory.CommandTypes.heal) return ResolveHealCommand;
 			if (command.type == Memory.CommandTypes.dodge) return ResolveDodgeCommand;
 			if (command.type == Memory.CommandTypes.escape) return ResolveEscapeCommand;
-			Debug.LogError($"Command type {command.type.name} is not handled");
-			return ResolveDefaultCommand;
-		}
-
-		private static IEnumerator ResolveDefaultCommand(CharacterBase source, CharacterBase target, int power) {
-			yield return null;
+			if (command.type == Memory.CommandTypes.rest) return ResolveRestCommand;
+			throw new ArgumentException($"Command type {command.type.name} is not handled");
 		}
 
 		private IEnumerator ResolveAttackCommand(CharacterBase source, CharacterBase target, int power) {
 			combatCharacters[source].PlayAttack();
 			var dodged = target.RollDodge();
-			if (dodged) combatCharacters[target].PlayDodge();
-			else combatCharacters[target].PlayDamaged();
+			if (dodged) {
+				combatCharacters[target].PlayDodge();
+				AudioManager.Sfx.PlayRandom("combat.attack.dodge");
+			}
+			else {
+				combatCharacters[target].PlayDamaged();
+				AudioManager.Sfx.PlayRandom("combat.attack.hit");
+			}
 			yield return new WaitForSeconds(.5f);
 			if (!dodged) {
 				target.Damage(power);
 				if (target.dead) {
+					AudioManager.Sfx.PlayRandom("combat.attack.dead");
 					combatCharacters[target].SetDead(true);
+
 					yield return new WaitForSeconds(1);
+					if (source == Game.instance.playerCharacter) {
+						var targetPosition = CameraUtils.main.WorldToScreenPoint(combatCharacters[target].transform.position);
+						yield return StartCoroutine(EarnLetters(target.name, targetPosition));
+						foreach (var command in target.knownCommands) {
+							yield return StartCoroutine(EarnLetters(command.inputName, targetPosition));
+						}
+					}
 				}
 			}
 			yield return new WaitForSeconds(.5f);
 			if (dodged) target.ResetChanceToDodge();
+		}
+
+		private IEnumerator ResolveRestCommand(CharacterBase source, CharacterBase target, int power) {
+			yield return new WaitForSeconds(.5f);
+			if (source != Game.instance.playerCharacter) throw new ArgumentException($"{source.completeName} is not allowed to play a rest action.");
+			Coroutine lastCoroutine = null;
+			foreach (var letter in power.CreateArray(t => TextUtils.allLetters.Random())) {
+				lastCoroutine = StartCoroutine(EarnLetter(letter, CameraUtils.main.WorldToScreenPoint(combatCharacters[source].headTransform.position)));
+				yield return new WaitForSeconds(.1f);
+			}
+
+			if (lastCoroutine != null) yield return lastCoroutine;
 		}
 
 		private IEnumerator ResolveEscapeCommand(CharacterBase source, CharacterBase target, int power) {
@@ -174,6 +188,7 @@ namespace _7DRL.Scenes.Combat {
 			source.AddChanceToEscape(power);
 			var escaped = source.RollEscape();
 			combatCharacters[source].PlayEscape(escaped);
+			AudioManager.Sfx.PlayRandom($"combat.escape.{(escaped ? "success" : "fail")}");
 			yield return new WaitForSeconds(.5f);
 			playerEscaped = escaped;
 			yield return new WaitForSeconds(.5f);
@@ -181,6 +196,7 @@ namespace _7DRL.Scenes.Combat {
 
 		private IEnumerator ResolveDodgeCommand(CharacterBase source, CharacterBase target, int power) {
 			combatCharacters[source].PlayDodge();
+			AudioManager.Sfx.PlayRandom("combat.attack.dodge");
 			yield return new WaitForSeconds(.5f);
 			source.AddChanceToDodge(power);
 			yield return new WaitForSeconds(.5f);
@@ -188,6 +204,7 @@ namespace _7DRL.Scenes.Combat {
 
 		private IEnumerator ResolveHealCommand(CharacterBase source, CharacterBase target, int power) {
 			combatCharacters[source].PlayHeal();
+			AudioManager.Sfx.PlayRandom("combat.heal");
 			yield return new WaitForSeconds(.5f);
 			source.Heal(power);
 			yield return new WaitForSeconds(.5f);
@@ -195,6 +212,7 @@ namespace _7DRL.Scenes.Combat {
 
 		private IEnumerator ResolveDefenseCommand(CharacterBase source, CharacterBase target, int power) {
 			combatCharacters[source].PlayDefense();
+			AudioManager.Sfx.PlayRandom("combat.armor");
 			yield return new WaitForSeconds(.5f);
 			source.AddArmor(power);
 			yield return new WaitForSeconds(.5f);

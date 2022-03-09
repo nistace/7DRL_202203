@@ -2,10 +2,13 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using _7DRL.Data;
+using _7DRL.GameComponents;
+using _7DRL.GameComponents.Characters;
+using _7DRL.GameComponents.Dungeons;
+using _7DRL.GameComponents.Dungeons.Misc;
+using _7DRL.GameComponents.TextAndLetters;
 using _7DRL.Games;
 using _7DRL.MiscConstants;
-using _7DRL.TextInput;
 using _7DRL.Ui;
 using UnityEngine;
 using Utils.Extensions;
@@ -14,7 +17,6 @@ using Utils.Libraries;
 namespace _7DRL.Scenes.Map {
 	public class MapSceneManager : SceneManager {
 		[SerializeField] protected Follow         _cameraFollow;
-		[SerializeField] protected DungeonSprites _sprites;
 		[SerializeField] protected SpriteRenderer _pathPrefab;
 		[SerializeField] protected Transform      _pathContainer;
 		[SerializeField] protected Vector2        _pathChunkSize;
@@ -33,7 +35,7 @@ namespace _7DRL.Scenes.Map {
 		}
 
 		private void OnDisable() {
-			_cameraFollow.enabled = false;
+			if (_cameraFollow) _cameraFollow.enabled = false;
 		}
 
 		public void Init(Game game) {
@@ -55,7 +57,7 @@ namespace _7DRL.Scenes.Map {
 		private void HandlePlayerFled() {
 			(playerPreviousPosition, Game.instance.playerCharacter.dungeonPosition) = (Game.instance.playerCharacter.dungeonPosition, playerPreviousPosition);
 			Game.instance.ChangeTurnStep(Game.TurnStep.Player);
-			tokens[Game.instance.playerCharacter].position = GridToWorldPosition(Game.instance.playerCharacter.dungeonPosition);
+			TeleportToken(Game.instance.playerCharacter);
 			RefreshWindRose();
 		}
 
@@ -76,14 +78,14 @@ namespace _7DRL.Scenes.Map {
 		private void InitTokens(Game game) {
 			_tokensContainer.ClearChildren();
 			tokens.Clear();
-			CreateToken(game.playerCharacter, true, _sprites.player, Colors.Of("token.player"), 3);
+			CreateToken(game.playerCharacter, true, Sprites.Of("token.player"), Colors.Of("token.player"), 3);
 
 			foreach (var dungeonMisc in game.dungeonMap.miscRoomContents) {
-				CreateToken(dungeonMisc, false, _sprites.GetMisc(dungeonMisc.type), Colors.Of("token.misc"), 1);
+				CreateToken(dungeonMisc, false, dungeonMisc.tokenSprite, Colors.Of("token.misc"), 1);
 			}
 
 			foreach (var encounter in game.dungeonMap.encounters) {
-				CreateToken(encounter, false, _sprites.GetFoe(encounter.level), Colors.Of("token.foe"), 2);
+				CreateToken(encounter, false, encounter.tokenSprite, Colors.Of("token.foe"), 2);
 			}
 		}
 
@@ -103,7 +105,7 @@ namespace _7DRL.Scenes.Map {
 			for (var y = 0; y < map.height; ++y) {
 				if (map[x, y] == DungeonMap.noDirection) continue;
 				pathChunks[x, y] = Instantiate(_pathPrefab, GridToWorldPosition(x, y), Quaternion.identity, _pathContainer);
-				pathChunks[x, y].sprite = map.IsRoom(x, y) ? _sprites.GetRoom(map[x, y]) : _sprites.GetLane(map[x, y]);
+				pathChunks[x, y].sprite = Sprites.Of($"dungeon.{(map.IsRoom(x, y) ? "room" : "path")}.{(int)map[x, y]}");
 				pathChunks[x, y].enabled = false;
 			}
 		}
@@ -139,38 +141,18 @@ namespace _7DRL.Scenes.Map {
 			return false;
 		}
 
-		private static IEnumerator DoSolveMiscTurnStep() {
-			if (Game.instance.dungeonMap.TryGetMisc(Game.instance.playerCharacter.dungeonPosition, out var misc)) {
-				Debug.Log("Misc: " + misc);
-				yield return null;
-			}
-		}
-
 		private IEnumerator DoPlayerTurnStep() {
-			TextInputManager.ClearInput();
-			TextInputManager.StartListening();
-			var lastInput = string.Empty;
+			var commands = Game.instance.playerCharacter.knownCommands.Where(t => t.type.IsUsable(CommandType.Location.Map) && CanExecute(t)).ToDictionary(t => t.inputName, t => t);
 			Game.instance.playerCharacter.SetCurrentCommand(string.Empty, CommandType.Location.Map);
 			Command command = null;
-			var hasCommand = false;
-			var canExecuteCommand = false;
-			while (!hasCommand || !canExecuteCommand) {
-				if (TextInputManager.currentInput != lastInput) {
-					lastInput = TextInputManager.currentInput;
-					Game.instance.playerCharacter.SetCurrentCommand(lastInput, CommandType.Location.Map);
-					hasCommand = Game.instance.playerCharacter.TryGetCurrentCommandIfComplete(out command);
-					canExecuteCommand = hasCommand && CanExecute(command) || Game.instance.playerCharacter.TryGetCurrentCommand(out var advisedCommand) && CanExecute(advisedCommand);
-					_ui.mapCharacter.commandTracker.valid = canExecuteCommand;
-				}
-				yield return null;
-			}
-			TextInputManager.StopListening();
+			yield return StartCoroutine(TextInputManager.ListenUntilResult(commands, OnPlayerInputChanged, t => command = t));
 			yield return new WaitForSeconds(1);
-
 			var power = Game.instance.playerCharacter.GetCommandPower(command);
 			yield return StartCoroutine(ResolvePlayerCommand(command, power));
 			Game.instance.playerCharacter.SetCurrentCommand(string.Empty, CommandType.Location.Map);
 		}
+
+		private static void OnPlayerInputChanged(string input, Command preferredCommand) => Game.instance.playerCharacter.SetCurrentCommand(input, CommandType.Location.Map);
 
 		private static bool CanExecute(Command command) => CanExecute(command.type);
 
@@ -189,10 +171,12 @@ namespace _7DRL.Scenes.Map {
 			}
 
 			foreach (var encounter in Game.instance.dungeonMap.encounters.ToArray()) {
-				var possibleMovements = Game.instance.dungeonMap.GetPossibleMovements(encounter.dungeonPosition, false).ToArray();
-				if (possibleMovements.Length > 0) {
-					Game.instance.dungeonMap.MoveEncounter(encounter, possibleMovements.Random());
-					StartCoroutine(MoveToken(encounter));
+				if (encounter.level != Encounter.Level.Boss) {
+					var possibleMovements = Game.instance.dungeonMap.GetPossibleMovements(encounter.dungeonPosition, false).ToArray();
+					if (possibleMovements.Length > 0) {
+						Game.instance.dungeonMap.MoveEncounter(encounter, possibleMovements.Random());
+						StartCoroutine(MoveToken(encounter));
+					}
 				}
 			}
 
@@ -210,6 +194,8 @@ namespace _7DRL.Scenes.Map {
 				yield return null;
 			}
 		}
+
+		private void TeleportToken(IDungeonCrawler source) => tokens[source].position = GridToWorldPosition(source.dungeonPosition);
 
 		private IEnumerator MoveToken(IDungeonCrawler source) {
 			var worldPosition = GridToWorldPosition(source.dungeonPosition);
@@ -263,7 +249,6 @@ namespace _7DRL.Scenes.Map {
 			playerPreviousPosition = Game.instance.playerCharacter.dungeonPosition;
 			Game.instance.playerCharacter.dungeonPosition += DungeonMap.directionToV2[direction];
 			RevealPosition(Game.instance.playerCharacter.dungeonPosition);
-			pathChunks[Game.instance.playerCharacter.dungeonPosition.x, Game.instance.playerCharacter.dungeonPosition.y].enabled = true;
 			yield return StartCoroutine(MoveToken(Game.instance.playerCharacter));
 			DiscoverAround(Game.instance.playerCharacter.dungeonPosition);
 			RefreshWindRose();
@@ -277,5 +262,106 @@ namespace _7DRL.Scenes.Map {
 			}
 			tokens.Values.ForEach(t => t.visible = true);
 		}
+
+		#region SolveMisc
+
+		private IEnumerator DoSolveMiscTurnStep() {
+			Game.instance.playerCharacter.SetCurrentCommand(string.Empty, CommandType.Location.Map);
+			if (Game.instance.dungeonMap.TryGetMisc(Game.instance.playerCharacter.dungeonPosition, out var misc)) {
+				CommonGameUi.dialogPanel.Clean();
+				CommonGameUi.dialogPanel.AddText(misc.interactionText);
+				foreach (var option in misc.interactionOptions) {
+					CommonGameUi.dialogPanel.AddOption(option.inputValue, option.endOfSentence, option.charged);
+				}
+				yield return null;
+				CommonGameUi.dialogPanel.Show(misc.interactionName);
+
+				var optionCommands = misc.interactionOptions.ToDictionary(t => t.inputValue, t => t);
+				InteractionOption inputInteraction = null;
+				yield return StartCoroutine(TextInputManager.ListenUntilResult(optionCommands, OnMiscInputChanged, interaction => inputInteraction = interaction));
+				yield return StartCoroutine(ResolveMisc(misc, inputInteraction));
+
+				CommonGameUi.dialogPanel.Hide();
+			}
+		}
+
+		private static void OnMiscInputChanged(string input, InteractionOption preferred) => CommonGameUi.dialogPanel.SetCommandProgress(preferred.inputValue, input.Length);
+
+		private IEnumerator ResolveMisc(IDungeonMisc source, InteractionOption option) => GetResolveFunc(option.type)(source);
+
+		private Func<IDungeonMisc, IEnumerator> GetResolveFunc(InteractionType type) {
+			switch (type) {
+				case InteractionType.Chest: return ResolveMiscChest;
+				case InteractionType.Skip: return ResolveMiscSkip;
+				case InteractionType.Read: return ResolveMiscRead;
+				case InteractionType.Skill: return ResolveMiscSkill;
+				case InteractionType.Power: return ResolveMiscPower;
+				case InteractionType.MaxHealth: return ResolveMiscMaxHealth;
+				case InteractionType.Portal: return ResolveMiscPortal;
+				default: throw new ArgumentOutOfRangeException();
+			}
+		}
+
+		private static IEnumerator ResolveMiscSkip(IDungeonMisc misc) {
+			yield return new WaitForSeconds(.5f);
+		}
+
+		private IEnumerator ResolveMiscChest(IDungeonMisc misc) {
+			var chest = misc as DungeonChest ?? throw new InvalidCastException();
+			foreach (var objectInChest in chest.chestBounty) {
+				yield return StartCoroutine(EarnLettersFromDialog(objectInChest));
+			}
+			yield return new WaitForSeconds(.5f);
+			Destroy(tokens[misc].gameObject);
+			Game.instance.dungeonMap.RemoveMisc(misc);
+		}
+
+		private IEnumerator ResolveMiscRead(IDungeonMisc misc) {
+			var stoneTabletOfKnowledge = misc as DungeonStoneTableOfKnowledge ?? throw new InvalidCastException();
+			yield return StartCoroutine(EarnLettersFromDialog(stoneTabletOfKnowledge.readBookName));
+			yield return new WaitForSeconds(.5f);
+			Destroy(tokens[misc].gameObject);
+			Game.instance.dungeonMap.RemoveMisc(misc);
+		}
+
+		private IEnumerator ResolveMiscSkill(IDungeonMisc misc) {
+			var stoneTabletOfKnowledge = misc as DungeonStoneTableOfKnowledge ?? throw new InvalidCastException();
+			yield return new WaitForSeconds(.5f);
+			Game.instance.playerCharacter.LearnCommand(stoneTabletOfKnowledge.skillCommand);
+			yield return new WaitForSeconds(.5f);
+			Destroy(tokens[misc].gameObject);
+			Game.instance.dungeonMap.RemoveMisc(misc);
+		}
+
+		private IEnumerator ResolveMiscPower(IDungeonMisc misc) {
+			var stoneTabletOfKnowledge = misc as DungeonStoneTableOfKnowledge ?? throw new InvalidCastException();
+			yield return new WaitForSeconds(.5f);
+			Game.instance.playerCharacter.EnhanceLetterPower(stoneTabletOfKnowledge.powerLetter, 2);
+			yield return new WaitForSeconds(.5f);
+			Destroy(tokens[misc].gameObject);
+			Game.instance.dungeonMap.RemoveMisc(misc);
+		}
+
+		private IEnumerator ResolveMiscMaxHealth(IDungeonMisc misc) {
+			yield return new WaitForSeconds(.5f);
+			Debug.LogWarning("ResolveMiscMaxHealth not handled");
+			yield return new WaitForSeconds(.5f);
+			Destroy(tokens[misc].gameObject);
+			Game.instance.dungeonMap.RemoveMisc(misc);
+		}
+
+		private IEnumerator ResolveMiscPortal(IDungeonMisc misc) {
+			var portal = misc as DungeonPortal ?? throw new InvalidCastException();
+			yield return new WaitForSeconds(.5f);
+			playerPreviousPosition = Game.instance.playerCharacter.dungeonPosition;
+			Game.instance.playerCharacter.dungeonPosition = portal.portalDestination;
+			RevealPosition(Game.instance.playerCharacter.dungeonPosition);
+			TeleportToken(Game.instance.playerCharacter);
+			DiscoverAround(Game.instance.playerCharacter.dungeonPosition);
+			RefreshWindRose();
+			yield return new WaitForSeconds(.5f);
+		}
+
+		#endregion
 	}
 }
