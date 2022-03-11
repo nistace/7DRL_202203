@@ -297,13 +297,21 @@ namespace _7DRL.Scenes.Map {
 			switch (type) {
 				case InteractionType.Chest: return ResolveMiscChest;
 				case InteractionType.Skip: return t => ResolveSkipInteraction();
-				case InteractionType.Read: return ResolveMiscRead;
+				case InteractionType.Book: return ResolveMiscBook;
 				case InteractionType.Skill: return ResolveMiscSkill;
 				case InteractionType.Power: return ResolveMiscPower;
 				case InteractionType.MaxHealth: return ResolveMiscMaxHealth;
 				case InteractionType.Portal: return ResolveMiscPortal;
+				case InteractionType.Fountain: return ResolveMiscFountain;
 				default: throw new ArgumentOutOfRangeException();
 			}
+		}
+
+		private static IEnumerator ResolveMiscFountain(IDungeonMisc misc) {
+			AudioManager.Sfx.PlayRandom("combat.heal");
+			yield return new WaitForSeconds(.5f);
+			Game.instance.playerCharacter.HealToMaxHealth();
+			yield return new WaitForSeconds(.5f);
 		}
 
 		private IEnumerator ResolveMiscChest(IDungeonMisc misc) {
@@ -316,24 +324,24 @@ namespace _7DRL.Scenes.Map {
 			Game.instance.dungeonMap.RemoveMisc(misc);
 		}
 
-		private IEnumerator ResolveMiscRead(IDungeonMisc misc) {
-			var stoneTabletOfKnowledge = misc as DungeonStoneTableOfKnowledge ?? throw new InvalidCastException();
-			yield return StartCoroutine(EarnLettersFromDialog(stoneTabletOfKnowledge.readBookName));
+		private IEnumerator ResolveMiscBook(IDungeonMisc misc) {
+			var bookMisc = misc as IBookDungeonMisc ?? throw new InvalidCastException();
+			yield return StartCoroutine(EarnLettersFromDialog(bookMisc.bookName));
 			yield return new WaitForSeconds(.5f);
 			Destroy(tokens[misc].gameObject);
 			Game.instance.dungeonMap.RemoveMisc(misc);
 		}
 
 		private IEnumerator ResolveMiscSkill(IDungeonMisc misc) {
-			var stoneTabletOfKnowledge = misc as DungeonStoneTableOfKnowledge ?? throw new InvalidCastException();
-			yield return StartCoroutine(ResolveSkillInteraction(stoneTabletOfKnowledge.skillCommand));
+			var skillMisc = misc as ISkillDungeonMisc ?? throw new InvalidCastException();
+			yield return StartCoroutine(ResolveSkillInteraction(skillMisc.skillCommand));
 			Destroy(tokens[misc].gameObject);
 			Game.instance.dungeonMap.RemoveMisc(misc);
 		}
 
 		private IEnumerator ResolveMiscPower(IDungeonMisc misc) {
-			var stoneTabletOfKnowledge = misc as DungeonStoneTableOfKnowledge ?? throw new InvalidCastException();
-			yield return StartCoroutine(ResolvePowerInteraction(stoneTabletOfKnowledge.powerLetter));
+			var powerDungeonMisc = misc as IPowerDungeonMisc ?? throw new InvalidCastException();
+			yield return StartCoroutine(ResolvePowerInteraction(powerDungeonMisc.powerLetter));
 			Destroy(tokens[misc].gameObject);
 			Game.instance.dungeonMap.RemoveMisc(misc);
 		}

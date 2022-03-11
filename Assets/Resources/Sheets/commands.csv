@@ -46,15 +46,3 @@ east,moveEast,72
 right,moveEast,73
 west,moveWest,64
 left,moveWest,65
-read,learn,0
-learn,learn,0
-study,learn,0
-inspect,learn,0
-examine,learn,0
-master,learn,0
-absorb,learn,0
-grasp,learn,0
-review,learn,0
-interact,interact,0
-use,interact,0
-take,interact,0

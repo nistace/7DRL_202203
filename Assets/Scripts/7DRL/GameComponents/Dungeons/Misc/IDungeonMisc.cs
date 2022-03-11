@@ -7,7 +7,9 @@ namespace _7DRL.GameComponents.Dungeons.Misc {
 		enum Type {
 			Chest,
 			Portal,
-			StoneTabletOfKnowledge
+			StoneTabletOfKnowledge,
+			FountainOfYouth,
+			TrainingDummy
 		}
 
 		Type type { get; }

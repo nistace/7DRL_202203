@@ -12,6 +12,7 @@ using _7DRL.Ui;
 using UnityEngine;
 using Utils.Audio;
 using Utils.Extensions;
+using Utils.Libraries;
 
 namespace _7DRL.Scenes.Combat {
 	public class CombatSceneManager : SceneManager {
@@ -39,14 +40,15 @@ namespace _7DRL.Scenes.Combat {
 
 		private IEnumerator DoBattle() {
 			_ui.SetVisible(true);
+
 			while (!IsBattleComplete()) {
 				yield return StartCoroutine(DoCurrentTurn());
 				battleStep = (BattleStep)((int)(battleStep + 1) % EnumUtils.SizeOf<BattleStep>());
 			}
 
-			
+			yield return StartCoroutine(_ui.cursor.Change(Color.white.With(a: 0), _ui.cursor.position));
 			_ui.SetVisible(false);
-			
+
 			yield return StartCoroutine(ResolveBattle());
 
 			//TODO show cursor over currently playing character
@@ -105,8 +107,9 @@ namespace _7DRL.Scenes.Combat {
 				case InteractionType.Power: return () => ResolvePowerInteraction(encounter.powerInteractionLetter);
 				case InteractionType.MaxHealth: return ResolveMaxHealthInteraction;
 				case InteractionType.Chest:
-				case InteractionType.Read:
+				case InteractionType.Book:
 				case InteractionType.Portal:
+				case InteractionType.Fountain:
 				default: throw new ArgumentException();
 			}
 		}
@@ -130,6 +133,7 @@ namespace _7DRL.Scenes.Combat {
 			combatCharacters.Clear();
 			combatCharacters.Add(Game.instance.playerCharacter, _combatScene.player);
 			_combatScene.player.Init(0, false);
+			_combatScene.RelocatePlayerAndFoes();
 			var farthestFoePosition = Vector3.zero;
 			for (var foeIndex = 0; foeIndex < encounter.foes.Length; foeIndex++) {
 				encounter.foes[foeIndex].ResetForBattle();
@@ -141,7 +145,9 @@ namespace _7DRL.Scenes.Combat {
 				farthestFoePosition = foePosition.position;
 			}
 
-			CameraUtils.main.transform.position = (farthestFoePosition + _combatScene.playerPosition.position) / 2 + _cameraOffset;
+			var middlePoint = (farthestFoePosition + _combatScene.playerPosition.position) / 2;
+			CameraUtils.main.transform.position = middlePoint + _cameraOffset;
+			_ui.cursor.Jump(Color.white.With(a: 0), CameraUtils.main.WorldToScreenPoint(middlePoint));
 
 			_ui.InitBars(Game.instance.playerCharacter, encounter.foes);
 			battleStep = BattleStep.Player;
@@ -149,16 +155,16 @@ namespace _7DRL.Scenes.Combat {
 
 		private IEnumerator DoFoesTurn() {
 			foreach (var foe in encounter.foes.Where(t => !t.dead)) {
-				yield return new WaitForSeconds(1);
+				yield return StartCoroutine(_ui.cursor.Change(Colors.Of("combat.cursor.foe"), CameraUtils.main.WorldToScreenPoint(combatCharacters[foe].transform.position)));
+				yield return new WaitForSeconds(.5f);
 				foe.ProgressCurrentCommand();
+				AudioManager.Sfx.PlayRandom("input.build");
 				if (foe.IsCurrentCommandReady()) {
-					yield return new WaitForSeconds(1);
-
+					yield return new WaitForSeconds(.5f);
 					yield return StartCoroutine(ResolveCommand(foe, Game.instance.playerCharacter, foe.currentCommand));
-
 					foe.PrepareNextCommand();
 				}
-				yield return new WaitForSeconds(1);
+				yield return new WaitForSeconds(1f);
 			}
 		}
 
@@ -166,6 +172,7 @@ namespace _7DRL.Scenes.Combat {
 			var commands = Game.instance.playerCharacter.knownCommands.Where(t => t.type.IsUsable(CommandType.Location.Combat)).ToDictionary(t => t.inputName, t => t);
 			Command command = null;
 			Game.instance.playerCharacter.SetCurrentCommand(string.Empty, CommandType.Location.Combat);
+			StartCoroutine(_ui.cursor.Change(Colors.Of("combat.cursor.player"), CameraUtils.main.WorldToScreenPoint(_combatScene.playerPosition.position)));
 			yield return StartCoroutine(TextInputManager.ListenUntilResult(commands, OnPlayerInputChanged, t => command = t));
 			yield return new WaitForSeconds(.5f);
 			var target = encounter.foes.First(t => !t.dead);

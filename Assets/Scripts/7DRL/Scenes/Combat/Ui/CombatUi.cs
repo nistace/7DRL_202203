@@ -7,10 +7,12 @@ namespace _7DRL.Scenes.Combat.Ui {
 		[SerializeField] protected Canvas                 _canvas;
 		[SerializeField] protected CombatCharacterBarUi   _playerBar;
 		[SerializeField] protected CombatCharacterBarUi[] _foeBars;
+		[SerializeField] protected CombatCursorUi         _cursor;
 
-		public Canvas                 canvas    => _canvas ? _canvas : _canvas = GetComponent<Canvas>();
-		public CombatCharacterBarUi   playerBar => _playerBar;
-		public CombatCharacterBarUi[] foeBars   => _foeBars;
+		private Canvas                 canvas    => _canvas ? _canvas : _canvas = GetComponent<Canvas>();
+		public  CombatCharacterBarUi   playerBar => _playerBar;
+		public  CombatCharacterBarUi[] foeBars   => _foeBars;
+		public  CombatCursorUi         cursor    => _cursor;
 
 		public void InitBars(PlayerCharacter player, Foe[] foes) {
 			_playerBar.Set(player);

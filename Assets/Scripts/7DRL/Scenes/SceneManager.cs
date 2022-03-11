@@ -45,6 +45,7 @@ namespace _7DRL.Scenes {
 			Coroutine lastCoroutine = null;
 			var possibleLetters = TextUtils.allLetters.Except(command.inputName).ToArray();
 			foreach (var letter in Game.instance.playerCharacter.GetCommandPower(command).CreateArray(t => possibleLetters.Random())) {
+				AudioManager.Sfx.Play("bonus.letter");
 				lastCoroutine = StartCoroutine(EarnLetter(letter, lettersOrigin));
 				yield return new WaitForSeconds(.1f);
 			}
@@ -71,7 +72,7 @@ namespace _7DRL.Scenes {
 			yield return new WaitForSeconds(.5f);
 			Game.instance.playerCharacter.IncreaseMaxHealth();
 			Game.instance.playerCharacter.HealToMaxHealth();
-			AudioManager.Sfx.PlayRandom("combat.heal");
+			AudioManager.Sfx.Play("bonus.misc");
 			yield return new WaitForSeconds(.5f);
 		}
 

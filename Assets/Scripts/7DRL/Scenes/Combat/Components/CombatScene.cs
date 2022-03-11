@@ -10,13 +10,10 @@ public class CombatScene : MonoBehaviour {
 	public CombatCharacter player         => _player;
 	public Transform       playerPosition => _playerPosition;
 
-	private void Update() {
+
+	public void RelocatePlayerAndFoes() {
 		var worldScreenHeight = (float)(CameraUtils.main.orthographicSize * 2.0);
 		var worldScreenWidth = worldScreenHeight / Display.main.renderingHeight * Display.main.renderingWidth;
-		RelocatePlayerAndFoes(worldScreenWidth);
-	}
-
-	private void RelocatePlayerAndFoes(float worldScreenWidth) {
 		_playerPosition.position = new Vector3(-worldScreenWidth * .25f, 0, 0);
 		for (var index = 0; index < _foesPositions.Length; index++) {
 			_foesPositions[index].position = new Vector3(worldScreenWidth * (.05f + index * .4f / _foesPositions.Length), 0, 0);

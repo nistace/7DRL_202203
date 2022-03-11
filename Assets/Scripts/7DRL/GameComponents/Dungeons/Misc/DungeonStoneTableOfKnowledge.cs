@@ -6,9 +6,9 @@ using Utils.Extensions;
 using Utils.Libraries;
 
 namespace _7DRL.GameComponents.Dungeons.Misc {
-	public class DungeonStoneTableOfKnowledge : IDungeonMisc {
-		private InteractionOption              readInteraction    { get; }
-		public  string                         readBookName       { get; }
+	public class DungeonStoneTableOfKnowledge : ISkillDungeonMisc, IPowerDungeonMisc, IBookDungeonMisc {
+		private InteractionOption              bookInteraction    { get; }
+		public  string                         bookName           { get; }
 		private InteractionOption              skillInteraction   { get; }
 		public  Command                        skillCommand       { get; }
 		private InteractionOption              powerInteraction   { get; }
@@ -21,14 +21,14 @@ namespace _7DRL.GameComponents.Dungeons.Misc {
 		public  Vector2Int                     dungeonPosition    { get; set; }
 		public  IDungeonMisc.Type              type               => IDungeonMisc.Type.StoneTabletOfKnowledge;
 
-		public DungeonStoneTableOfKnowledge(Vector2Int position, (InteractionOption interaction, string bookName) readInteraction, (InteractionOption interaction, Command command) skillInteraction,
+		public DungeonStoneTableOfKnowledge(Vector2Int position, (InteractionOption interaction, string bookName) bookInteraction, (InteractionOption interaction, Command command) skillInteraction,
 			(InteractionOption interaction, char letter) powerInteraction, InteractionOption skipInteraction) {
 			dungeonPosition = position;
-			(this.readInteraction, readBookName) = readInteraction;
+			(this.bookInteraction, bookName) = bookInteraction;
 			(this.skillInteraction, skillCommand) = skillInteraction;
 			(this.powerInteraction, powerLetter) = powerInteraction;
 			this.skipInteraction = skipInteraction;
-			interactionOptions = new List<InteractionOption> { this.readInteraction, this.skillInteraction, this.powerInteraction, this.skipInteraction }.NotNull();
+			interactionOptions = new List<InteractionOption> { this.bookInteraction, this.skillInteraction, this.powerInteraction, this.skipInteraction }.NotNull();
 		}
 	}
 }

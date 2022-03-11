@@ -10,10 +10,9 @@ namespace _7DRL.MiscConstants {
 			public static int        additionalRandomPaths { get; } = Mathf.FloorToInt(width * height * .1f);
 			public static Vector2Int playerStartPosition   { get; } = Vector2Int.zero;
 			public static float      chestBountyScore      => 50;
-			public static float      readBookNameScore     => 50;
+			public static float      bookNameScore         => 100;
 			public static float      skillCommandScore     => 10;
-			public static float      powerLetterScore      => 5;
-			public static int        minRoomCount          { get; } = Mathf.CeilToInt(width * height * .2f);
+			public static int        minRoomCount          { get; } = Mathf.CeilToInt(width * height * .3f);
 			public static int        encounters            { get; } = Mathf.CeilToInt(width * height * .2f);
 		}
 
@@ -25,8 +24,8 @@ namespace _7DRL.MiscConstants {
 		}
 
 		public static class Foes {
-			public const float maxHealthCoefficient = .4f;
-			public const float maxHealthConstant    = 25;
+			public const float maxHealthCoefficient = .1f;
+			public const float maxHealthConstant    = 50;
 		}
 	}
 }

@@ -57,13 +57,13 @@ namespace _7DRL.Games {
 			var level = (Encounter.Level)Mathf.FloorToInt(Mathf.Clamp01(Mathf.Clamp01(distanceRatio) - .01f) * (EnumUtils.SizeOf<Encounter.Level>() - 1));
 
 			var countFoes = Mathf.Clamp((int)(level + 1), 1, 3);
-			var minSeed = 1 + (float)level * 1.4f;
+			var minSeed = 1 + (float)level;
 			var maxSeed = minSeed * 1.4f + ((int)level + 1) * (distanceRatio * (EnumUtils.SizeOf<Encounter.Level>() - 1) % 1);
 
 			return GenerateEncounter(position, level, countFoes.CreateArray(t => (int)Random.Range(minSeed, maxSeed)), ref playerUnknownCommands, letterPowers);
 		}
 
-		public static Encounter GenerateEncounter(Vector2Int position, Encounter.Level level, IEnumerable<int> foesLevel, ref HashSet<Command> playerUnknownCommands,
+		private static Encounter GenerateEncounter(Vector2Int position, Encounter.Level level, IEnumerable<int> foesLevel, ref HashSet<Command> playerUnknownCommands,
 			IReadOnlyDictionary<char, int> letterPowers) {
 			var foes = foesLevel.Select(t => GenerateFoe(t, letterPowers)).ToArray();
 
@@ -93,34 +93,20 @@ namespace _7DRL.Games {
 
 		private static Foe GenerateFoe(int level, IReadOnlyDictionary<char, int> letterPowers) {
 			var type = Memory.foeTypes.Random();
-			var powerCoefficient = 1 + (level - 2f) / 10;
+			const int powerCoefficient = 1;
 			var commands = new HashSet<Command>();
-			if (TryGenerateFoeCommands((level + 3) / 4, Memory.commandsPerType[Memory.CommandTypes.attack], out var attackCommands))
-				commands.AddAll(attackCommands);
-			if (TryGenerateFoeCommands((level + 2) / 4, Memory.commandsPerType[Memory.CommandTypes.defense], out var defenseCommands))
-				commands.AddAll(defenseCommands);
-			if (TryGenerateFoeCommands((level + 1) / 4, Memory.commandsPerType[Memory.CommandTypes.heal], out var healCommands))
-				commands.AddAll(healCommands);
-			if (TryGenerateFoeCommands((level + 0) / 4, Memory.commandsPerType[Memory.CommandTypes.dodge], out var dodgeCommands))
-				commands.AddAll(dodgeCommands);
-			var health = Mathf.RoundToInt(RlConstants.Foes.maxHealthConstant + RlConstants.Foes.maxHealthCoefficient * TextUtils.GetInputValue(type.inputName, letterPowers)) * level;
+			if (level >= 1) commands.Add(Memory.commandsPerType[Memory.CommandTypes.attack].Except(commands).Random());
+			if (level >= 2) commands.Add(Memory.commandsPerType[Memory.CommandTypes.defense].Except(commands).Random());
+			if (level >= 3) commands.Add(Memory.commandsPerType[Memory.CommandTypes.attack].Except(commands).Random());
+			if (level >= 4) commands.Add(Memory.commandsPerType[Memory.CommandTypes.heal].Except(commands).Random());
+			if (level >= 5) commands.Add(Memory.commandsPerType[Memory.CommandTypes.dodge].Except(commands).Random());
+			if (level >= 6) commands.Add(Memory.commandsPerType[Memory.CommandTypes.attack].Except(commands).Random());
+			if (level >= 7) commands.Add(Memory.commandsPerType[Memory.CommandTypes.defense].Except(commands).Random());
+			if (level >= 8) commands.Add(Memory.commandsPerType[Memory.CommandTypes.attack].Except(commands).Random());
+			if (level >= 9) commands.Add(Memory.commandsPerType[Memory.CommandTypes.defense].Except(commands).Random());
+			var score = TextUtils.GetInputValue(type.inputName, letterPowers) + commands.Sum(t => TextUtils.GetInputValue(t.inputName, letterPowers));
+			var health = Mathf.RoundToInt(RlConstants.Foes.maxHealthConstant + RlConstants.Foes.maxHealthCoefficient * score) * level;
 			return new Foe(type, level, health, powerCoefficient, commands);
-		}
-
-		private static bool TryGenerateFoeCommands(int count, IReadOnlyList<Command> fromList, out ISet<Command> commands) {
-			commands = null;
-			if (count == 0) return false;
-			if (fromList == null) return false;
-			if (fromList.Count == 0) return false;
-			if (fromList.Count <= count) {
-				commands = new HashSet<Command>(fromList);
-				return true;
-			}
-			commands = new HashSet<Command>();
-			for (var i = 0; i < count; ++i) {
-				commands.Add(fromList.Random());
-			}
-			return true;
 		}
 
 		private static DungeonMap GenerateMap(int width, int height, Dictionary<char, int> letterPowers, ref HashSet<Command> playerUnknownCommands) {
@@ -137,9 +123,7 @@ namespace _7DRL.Games {
 
 		private static IReadOnlyDictionary<Vector2Int, Encounter> GenerateEncounters(DungeonMap.Direction[,] gridDirections, IReadOnlyCollection<Vector2Int> rooms, Vector2Int bossCell,
 			ref HashSet<Command> playerUnknownCommands, IReadOnlyDictionary<char, int> letterPowers) {
-			var result = new Dictionary<Vector2Int, Encounter> {
-				{ bossCell, GenerateEncounter(bossCell, Encounter.Level.Boss, new[] { Random.Range(700, 800), Random.Range(800, 900), Random.Range(900, 1000) }, ref playerUnknownCommands, letterPowers) }
-			};
+			var result = new Dictionary<Vector2Int, Encounter> { { bossCell, GenerateEncounter(bossCell, Encounter.Level.Boss, new[] { 4, 5, 6 }, ref playerUnknownCommands, letterPowers) } };
 
 			var maxDistance = Vector2.Distance(bossCell, RlConstants.Dungeon.playerStartPosition);
 			while (result.Count < RlConstants.Dungeon.encounters) {
@@ -166,7 +150,10 @@ namespace _7DRL.Games {
 				result.Add(portal1, GeneratePortal(portal1, portal0));
 			}
 
-			// TODO generate fountain
+			if (remainingRooms.Count >= 1) {
+				var fountainPosition = remainingRooms.Pop();
+				result.Add(fountainPosition, GenerateFountainOfYouth(fountainPosition));
+			}
 
 			while (remainingRooms.Count > 0) {
 				var position = remainingRooms.Pop();
@@ -181,6 +168,12 @@ namespace _7DRL.Games {
 			var portalInteraction = Memory.interactionOptions[InteractionType.Portal].Random();
 			var skipInteraction = Memory.interactionOptions[InteractionType.Skip].Random();
 			return new DungeonPortal(origin, (portalInteraction, destination), skipInteraction);
+		}
+
+		private static DungeonFountainOfYouth GenerateFountainOfYouth(Vector2Int position) {
+			var fountainInteraction = Memory.interactionOptions[InteractionType.Fountain].Random();
+			var skipInteraction = Memory.interactionOptions[InteractionType.Skip].Random();
+			return new DungeonFountainOfYouth(position, fountainInteraction, skipInteraction);
 		}
 
 		private static DungeonChest GenerateChest(IReadOnlyDictionary<char, int> letterPowers, Vector2Int position) {
@@ -198,8 +191,8 @@ namespace _7DRL.Games {
 			var options = playerUnknownCommands.Count == 0 ? 1 : Random.Range(0, 3);
 
 			if (options == 0 || options == 1) { // book
-				var action = Memory.interactionOptions[InteractionType.Read].Random();
-				var score = Mathf.RoundToInt(RlConstants.Dungeon.readBookNameScore * Vector2.Distance(position, RlConstants.Dungeon.playerStartPosition))
+				var action = Memory.interactionOptions[InteractionType.Book].Random();
+				var score = Mathf.RoundToInt(RlConstants.Dungeon.bookNameScore * Vector2.Distance(position, RlConstants.Dungeon.playerStartPosition))
 								+ TextUtils.GetInputValue(action.inputValue, letterPowers);
 				readInteraction.bookName = Memory.bookNameGenerator.Generate(score, letterPowers);
 				readInteraction.interaction = new InteractionOption(action, $"\"{readInteraction.bookName}\"");

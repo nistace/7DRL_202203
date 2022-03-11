@@ -437,7 +437,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.7, g: 0, b: 0, a: 1}
+  m_Color: {r: 0.8980392, g: 0, b: 0, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -605,11 +605,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8524164899237926709, guid: f5bf31941a82eca4781e19558745e6b8, type: 3}
       propertyPath: m_fontColor.b
-      value: 0.3509804
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 8524164899237926709, guid: f5bf31941a82eca4781e19558745e6b8, type: 3}
       propertyPath: m_fontColor.g
-      value: 0.7019608
+      value: 0.7001484
       objectReference: {fileID: 0}
     - target: {fileID: 8524164899237926709, guid: f5bf31941a82eca4781e19558745e6b8, type: 3}
       propertyPath: m_fontColor.r
@@ -762,7 +762,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8524164899237926709, guid: f5bf31941a82eca4781e19558745e6b8, type: 3}
       propertyPath: m_fontColor.r
-      value: 0.7019608
+      value: 0.8980392
       objectReference: {fileID: 0}
     - target: {fileID: 8524164899237926709, guid: f5bf31941a82eca4781e19558745e6b8, type: 3}
       propertyPath: m_fontSizeMax
@@ -903,11 +903,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8524164899237926709, guid: f5bf31941a82eca4781e19558745e6b8, type: 3}
       propertyPath: m_fontColor.b
-      value: 0.7019608
+      value: 0.8980392
       objectReference: {fileID: 0}
     - target: {fileID: 8524164899237926709, guid: f5bf31941a82eca4781e19558745e6b8, type: 3}
       propertyPath: m_fontColor.g
-      value: 0.39600086
+      value: 0.43529412
       objectReference: {fileID: 0}
     - target: {fileID: 8524164899237926709, guid: f5bf31941a82eca4781e19558745e6b8, type: 3}
       propertyPath: m_fontColor.r
@@ -1173,7 +1173,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8524164899237926709, guid: f5bf31941a82eca4781e19558745e6b8, type: 3}
       propertyPath: m_fontColor.b
-      value: 0.7019608
+      value: 0.9
       objectReference: {fileID: 0}
     - target: {fileID: 8524164899237926709, guid: f5bf31941a82eca4781e19558745e6b8, type: 3}
       propertyPath: m_fontColor.g
@@ -1181,7 +1181,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8524164899237926709, guid: f5bf31941a82eca4781e19558745e6b8, type: 3}
       propertyPath: m_fontColor.r
-      value: 0.4679741
+      value: 0.598324
       objectReference: {fileID: 0}
     - target: {fileID: 8524164899237926709, guid: f5bf31941a82eca4781e19558745e6b8, type: 3}
       propertyPath: m_fontSizeMax

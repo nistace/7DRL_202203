@@ -2,10 +2,11 @@
 	public enum InteractionType {
 		Chest,
 		Skip,
-		Read,
+		Book,
 		Skill,
 		Power,
 		MaxHealth,
-		Portal
+		Portal,
+		Fountain
 	}
 }

@@ -6,10 +6,10 @@ chest,1,pick,the chest and keep what's inside for yourself.
 skip,0,leave,it alone and continue your journey.
 skip,0,continue,your journey without caring.
 skip,0,pursue,your journey without caring.
-read,1,read,
-read,1,study,
-read,1,consult,
-read,1,observe,
+book,1,read,
+book,1,study,
+book,1,consult,
+book,1,observe,
 skill,1,grasp,
 skill,1,master,
 skill,1,train,
