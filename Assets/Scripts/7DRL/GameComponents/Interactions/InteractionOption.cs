@@ -1,6 +1,6 @@
 ﻿using _7DRL.GameComponents.TextAndLetters;
 
-namespace _7DRL.GameComponents.Dungeons {
+namespace _7DRL.GameComponents.Interactions {
 	public class InteractionOption {
 		public string          inputValue    { get; }
 		public string          endOfSentence { get; }

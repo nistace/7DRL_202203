@@ -95,5 +95,7 @@ namespace _7DRL.GameComponents.Characters {
 			ResetChanceToEscape();
 			ResetArmor();
 		}
+
+		public void HealToMaxHealth() => Heal(_maxHealth);
 	}
 }

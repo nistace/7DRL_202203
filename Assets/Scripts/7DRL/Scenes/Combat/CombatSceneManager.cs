@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using _7DRL.GameComponents.Characters;
+using _7DRL.GameComponents.Interactions;
 using _7DRL.GameComponents.TextAndLetters;
 using _7DRL.Games;
 using _7DRL.MiscConstants;
@@ -11,7 +12,6 @@ using _7DRL.Ui;
 using UnityEngine;
 using Utils.Audio;
 using Utils.Extensions;
-using Random = UnityEngine.Random;
 
 namespace _7DRL.Scenes.Combat {
 	public class CombatSceneManager : SceneManager {
@@ -30,27 +30,85 @@ namespace _7DRL.Scenes.Combat {
 		private bool                                       playerEscaped    { get; set; }
 		private BattleStep                                 battleStep       { get; set; }
 
-		[ContextMenu("Init Random")]
-		public void InitRandom() => Init(GameFactory.GenerateEncounter(Vector2Int.zero, Encounter.Level.Weak, new[] { Random.Range(1, 199) },
-			Game.instance.defaultLetterPowers.Select((t, i) => (t, i)).ToDictionary(t => (char)('A' + t.i), t => t.t)));
-
 		public void Init(Encounter encounter) {
 			this.encounter = encounter;
 			InitBattle();
 		}
 
-		[ContextMenu("StartBattle")] public void StartBattle() => StartCoroutine(DoBattle());
+		public void StartBattle() => StartCoroutine(DoBattle());
 
 		private IEnumerator DoBattle() {
-			while (!TryInterruptBattle()) {
+			_ui.SetVisible(true);
+			while (!IsBattleComplete()) {
 				yield return StartCoroutine(DoCurrentTurn());
 				battleStep = (BattleStep)((int)(battleStep + 1) % EnumUtils.SizeOf<BattleStep>());
 			}
 
+			
+			_ui.SetVisible(false);
+			
+			yield return StartCoroutine(ResolveBattle());
+
 			//TODO show cursor over currently playing character
 			//TODO manage player dead
-			//TODO level up player
-			//TODO create different visuals for the characters
+		}
+
+		private IEnumerator ResolveBattle() {
+			if (playerEscaped) {
+				GameEvents.onPlayerFledBattle.Invoke();
+				yield break;
+			}
+			if (Game.instance.playerCharacter.dead) {
+				GameEvents.onPlayerDead.Invoke();
+				yield break;
+			}
+			if (encounter.foes.All(t => t.dead)) {
+				yield return StartCoroutine(ResolveLevelUpDialog());
+				GameEvents.onEncounterDefeated.Invoke(encounter);
+				yield break;
+			}
+			throw new ArgumentException("Cannot resolve the battle when no possible outcome has been reached");
+		}
+
+		private bool IsBattleComplete() {
+			if (playerEscaped) return true;
+			if (Game.instance.playerCharacter.dead) return true;
+			if (encounter.foes.All(t => t.dead)) return true;
+			return false;
+		}
+
+		private IEnumerator ResolveLevelUpDialog() {
+			Game.instance.playerCharacter.SetCurrentCommand(string.Empty, CommandType.Location.Combat);
+			CommonGameUi.dialogPanel.Clean();
+			CommonGameUi.dialogPanel.AddText("You successfully defeated this encounter, and leveled up. How would you like to use what you learned?");
+
+			foreach (var option in encounter.interactionOptions) {
+				CommonGameUi.dialogPanel.AddOption(option.inputValue, option.endOfSentence, option.charged);
+			}
+			yield return null;
+			CommonGameUi.dialogPanel.Show("Level up");
+
+			var optionCommands = encounter.interactionOptions.ToDictionary(t => t.inputValue, t => t);
+			InteractionOption inputInteraction = null;
+			yield return StartCoroutine(TextInputManager.ListenUntilResult(optionCommands, HandleDialogInputChanged, interaction => inputInteraction = interaction));
+			yield return StartCoroutine(ResolveLevelUp(inputInteraction));
+
+			CommonGameUi.dialogPanel.Hide();
+		}
+
+		private IEnumerator ResolveLevelUp(InteractionOption option) => GetResolveLevelUpFunc(option.type)();
+
+		private Func<IEnumerator> GetResolveLevelUpFunc(InteractionType type) {
+			switch (type) {
+				case InteractionType.Skip: return ResolveSkipInteraction;
+				case InteractionType.Skill: return () => ResolveSkillInteraction(encounter.skillInteractionCommand);
+				case InteractionType.Power: return () => ResolvePowerInteraction(encounter.powerInteractionLetter);
+				case InteractionType.MaxHealth: return ResolveMaxHealthInteraction;
+				case InteractionType.Chest:
+				case InteractionType.Read:
+				case InteractionType.Portal:
+				default: throw new ArgumentException();
+			}
 		}
 
 		private IEnumerator DoCurrentTurn() {
@@ -61,22 +119,6 @@ namespace _7DRL.Scenes.Combat {
 				case BattleStep.Foes: return DoFoesTurn();
 				default: throw new ArgumentOutOfRangeException();
 			}
-		}
-
-		private bool TryInterruptBattle() {
-			if (playerEscaped) {
-				GameEvents.onPlayerFledBattle.Invoke();
-				return true;
-			}
-			if (Game.instance.playerCharacter.dead) {
-				GameEvents.onPlayerDead.Invoke();
-				return true;
-			}
-			if (encounter.foes.All(t => t.dead)) {
-				GameEvents.onEncounterDefeated.Invoke(encounter);
-				return true;
-			}
-			return false;
 		}
 
 		private void InitBattle() {
@@ -125,7 +167,7 @@ namespace _7DRL.Scenes.Combat {
 			Command command = null;
 			Game.instance.playerCharacter.SetCurrentCommand(string.Empty, CommandType.Location.Combat);
 			yield return StartCoroutine(TextInputManager.ListenUntilResult(commands, OnPlayerInputChanged, t => command = t));
-			yield return new WaitForSeconds(1);
+			yield return new WaitForSeconds(.5f);
 			var target = encounter.foes.First(t => !t.dead);
 			yield return StartCoroutine(ResolveCommand(Game.instance.playerCharacter, target, command));
 			Game.instance.playerCharacter.SetCurrentCommand(string.Empty, CommandType.Location.Combat);

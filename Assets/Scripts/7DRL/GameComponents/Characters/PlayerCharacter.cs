@@ -17,7 +17,7 @@ namespace _7DRL.GameComponents.Characters {
 		[SerializeField] protected LetterReserve _letterReserve;
 		[SerializeField] protected Vector2Int    _dungeonPosition;
 
-		public override string             name                         => "Player";
+		public override string             name                         => RlConstants.Player.name;
 		public override string             currentCommandLetters        => _currentCommandLetters;
 		public override string             currentCommandMissingLetters => _currentCommandMissingLetters;
 		public          IReadOnlyList<int> letterPowers                 => _letterPowers;
@@ -33,7 +33,7 @@ namespace _7DRL.GameComponents.Characters {
 		}
 
 		public PlayerCharacter(IEnumerable<int> defaultLetterPowers, IReadOnlyDictionary<char, int> playerInitialLetters, IEnumerable<Command> playerInitialCommands) : base(1,
-			RlConstants.Player.initialMaxHealth, playerInitialCommands) {
+			TextUtils.GetValueOfRaw(RlConstants.Player.name, playerInitialLetters), playerInitialCommands) {
 			_letterPowers = new List<int>(defaultLetterPowers);
 			_letterReserve = new LetterReserve();
 			playerInitialLetters.ForEach(t => _letterReserve.Add(t.Key, t.Value));
@@ -80,5 +80,8 @@ namespace _7DRL.GameComponents.Characters {
 			}
 			return count;
 		}
+
+
+		public void IncreaseMaxHealth() => _maxHealth  += Mathf.RoundToInt(.1f * _maxHealth);
 	}
 }

@@ -2,6 +2,7 @@
 
 namespace _7DRL.MiscConstants {
 	public static class RlConstants {
+		public const int letterMaxPower = 100;
 
 		public static class Dungeon {
 			public const  int        width  = 10;
@@ -17,14 +18,15 @@ namespace _7DRL.MiscConstants {
 		}
 
 		public static class Player {
-			public const int initialMaxHealth               = 500;
-			public const int initialLettersPerPower         = 100;
-			public const int initialLettersPerKnownCommands = 5;
+			public const string name                           = "Typist";
+			public const float  maxHealthCoefficient           = 1f;
+			public const int    initialLettersPerPower         = 100;
+			public const int    initialLettersPerKnownCommands = 5;
 		}
 
 		public static class Foes {
-			public const float maxHealthCoefficient = .2f;
-			public const float maxHealthConstant    = 150;
+			public const float maxHealthCoefficient = .4f;
+			public const float maxHealthConstant    = 25;
 		}
 	}
 }

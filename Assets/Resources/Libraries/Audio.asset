@@ -29,9 +29,13 @@ MonoBehaviour:
   - combat.escape.fail.0
   - combat.escape.success.0
   - combat.heal.0
+  - bonus.misc
+  - bonus.letter
+  - bonus.letters
+  - bonus.word
   _items:
   - {fileID: 8300000, guid: 55817a70222f5dc4fa172ea2f8ffde12, type: 3}
-  - {fileID: 8300000, guid: 8d88bb6b0122331458bbc915bb1c8c37, type: 3}
+  - {fileID: 8300000, guid: 5453a4223329f8848b41bef383f2b468, type: 3}
   - {fileID: 8300000, guid: 03b5ce10dcb79164b8196b97bffe7fbe, type: 3}
   - {fileID: 8300000, guid: 2a5d78fbfd81b444fa618235b50b98ee, type: 3}
   - {fileID: 8300000, guid: 91729881bcde83b4c94f3987815f21d5, type: 3}
@@ -42,3 +46,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: ee9f273ceaa4b444a8bed9763d61fdf8, type: 3}
   - {fileID: 8300000, guid: 8f49f600a3567744c86dd8409879cd7b, type: 3}
   - {fileID: 8300000, guid: d9fa7c9eec6017147b45fb0c9f028b38, type: 3}
+  - {fileID: 8300000, guid: 25774d486d53a4a4e9950d7ca42f48bc, type: 3}
+  - {fileID: 8300000, guid: 6149b7023da906e4d85c99d812ab790a, type: 3}
+  - {fileID: 8300000, guid: a3370ef796c66084381232c590d0c7f8, type: 3}
+  - {fileID: 8300000, guid: a3370ef796c66084381232c590d0c7f8, type: 3}

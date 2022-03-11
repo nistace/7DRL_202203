@@ -4,6 +4,7 @@ using System.Linq;
 using _7DRL.GameComponents.Characters;
 using _7DRL.GameComponents.Dungeons;
 using _7DRL.GameComponents.Dungeons.Misc;
+using _7DRL.GameComponents.Interactions;
 using _7DRL.GameComponents.TextAndLetters;
 using _7DRL.MiscConstants;
 using UnityEngine;
@@ -43,26 +44,52 @@ namespace _7DRL.Games {
 		}
 
 		private static Dictionary<char, int> GenerateDefaultLetterPowers() {
-			var allInputNames = Memory.commands.Select(t => t.inputName)
-				//	.Union(Memory.foeTypes.Select(t => t.inputName))
-				//	.Union(Memory.interactionOptions.Values.SelectMany(t => t).Select(t => t.inputValue))
-				.ToArray();
-			var totalLetters = allInputNames.Sum(t => t.Length);
-			return TextUtils.allLetters.ToDictionary(c => c, c => totalLetters / allInputNames.Sum(t => t.Count(u => u == c)));
+			var allInputNames = Memory.commands.Select(t => t.inputName).ToArray();
+			float totalLetters = allInputNames.Sum(t => t.Length);
+			var lettersPresence = TextUtils.allLetters.ToDictionary(c => c, c => allInputNames.Sum(t => t.Count(u => u == c)) / totalLetters);
+			var letterRawPower = lettersPresence.ToDictionary(t => t.Key, t => 1f / t.Value);
+			var minRawPower = letterRawPower.Min(t => t.Value);
+			var maxRawPower = letterRawPower.Max(t => t.Value);
+			return letterRawPower.ToDictionary(t => t.Key, t => Mathf.RoundToInt(t.Value.Remap(minRawPower, maxRawPower, 1, RlConstants.letterMaxPower)));
 		}
 
-		private static Encounter GenerateEncounter(Vector2Int position, float distanceRatio, IReadOnlyDictionary<char, int> letterPowers) {
+		private static Encounter GenerateEncounter(Vector2Int position, float distanceRatio, ref HashSet<Command> playerUnknownCommands, IReadOnlyDictionary<char, int> letterPowers) {
 			var level = (Encounter.Level)Mathf.FloorToInt(Mathf.Clamp01(Mathf.Clamp01(distanceRatio) - .01f) * (EnumUtils.SizeOf<Encounter.Level>() - 1));
 
 			var countFoes = Mathf.Clamp((int)(level + 1), 1, 3);
 			var minSeed = 1 + (float)level * 1.4f;
 			var maxSeed = minSeed * 1.4f + ((int)level + 1) * (distanceRatio * (EnumUtils.SizeOf<Encounter.Level>() - 1) % 1);
 
-			return GenerateEncounter(position, level, countFoes.CreateArray(t => (int)Random.Range(minSeed, maxSeed)), letterPowers);
+			return GenerateEncounter(position, level, countFoes.CreateArray(t => (int)Random.Range(minSeed, maxSeed)), ref playerUnknownCommands, letterPowers);
 		}
 
-		public static Encounter GenerateEncounter(Vector2Int position, Encounter.Level level, IEnumerable<int> foesLevel, IReadOnlyDictionary<char, int> letterPowers) =>
-			new Encounter(level, position, foesLevel.Select(t => GenerateFoe(t, letterPowers)).ToArray());
+		public static Encounter GenerateEncounter(Vector2Int position, Encounter.Level level, IEnumerable<int> foesLevel, ref HashSet<Command> playerUnknownCommands,
+			IReadOnlyDictionary<char, int> letterPowers) {
+			var foes = foesLevel.Select(t => GenerateFoe(t, letterPowers)).ToArray();
+
+			InteractionOption maxHealthInteraction = default; // 0 | 1
+			(InteractionOption interaction, Command skill) skillInteraction = (default, default); // 0 | 2
+			(InteractionOption interaction, char letter) powerInteraction = (default, default); // 1 | 2
+			var foesCommandsUnknownByPlayer = foes.SelectMany(t => t.knownCommands).Intersect(playerUnknownCommands).ToArray();
+			var options = foesCommandsUnknownByPlayer.Length == 0 ? 1 : Random.Range(0, 3);
+
+			if (options == 0 || options == 1) { // max health
+				maxHealthInteraction = Memory.interactionOptions[InteractionType.MaxHealth].Random();
+			}
+			if (options == 0 || options == 2) { // skill
+				skillInteraction.skill = foesCommandsUnknownByPlayer.Random();
+				skillInteraction.interaction = new InteractionOption(Memory.interactionOptions[InteractionType.Skill].Random(), $"the {skillInteraction.skill.inputName} command");
+				playerUnknownCommands.Remove(skillInteraction.skill);
+			}
+			if (options == 1 || options == 2) { // power
+				powerInteraction.letter = TextUtils.allLetters.Random();
+				powerInteraction.interaction = new InteractionOption(Memory.interactionOptions[InteractionType.Power].Random(), $"the letter \"{powerInteraction.letter}\" to double its power.");
+			}
+
+			var skipInteraction = Memory.interactionOptions[InteractionType.Skip].Random();
+
+			return new Encounter(level, position, foes, maxHealthInteraction, skillInteraction, powerInteraction, skipInteraction);
+		}
 
 		private static Foe GenerateFoe(int level, IReadOnlyDictionary<char, int> letterPowers) {
 			var type = Memory.foeTypes.Random();
@@ -104,14 +131,14 @@ namespace _7DRL.Games {
 			var rooms = GenerateDungeonRooms(gridDirections);
 			var bossCell = rooms.FirstWhereMaxOrDefault(t => Vector2.SqrMagnitude(RlConstants.Dungeon.playerStartPosition - t));
 			var miscRoomContents = GenerateMiscRoomContents(rooms.Except(new[] { bossCell, new Vector2Int(0, 0) }), letterPowers, ref playerUnknownCommands);
-			var encounters = GenerateEncounters(gridDirections, rooms, bossCell, letterPowers);
+			var encounters = GenerateEncounters(gridDirections, rooms, bossCell, ref playerUnknownCommands, letterPowers);
 			return new DungeonMap(gridDirections, rooms, miscRoomContents, encounters);
 		}
 
 		private static IReadOnlyDictionary<Vector2Int, Encounter> GenerateEncounters(DungeonMap.Direction[,] gridDirections, IReadOnlyCollection<Vector2Int> rooms, Vector2Int bossCell,
-			IReadOnlyDictionary<char, int> letterPowers) {
+			ref HashSet<Command> playerUnknownCommands, IReadOnlyDictionary<char, int> letterPowers) {
 			var result = new Dictionary<Vector2Int, Encounter> {
-				{ bossCell, GenerateEncounter(bossCell, Encounter.Level.Boss, new[] { Random.Range(700, 800), Random.Range(800, 900), Random.Range(900, 1000) }, letterPowers) }
+				{ bossCell, GenerateEncounter(bossCell, Encounter.Level.Boss, new[] { Random.Range(700, 800), Random.Range(800, 900), Random.Range(900, 1000) }, ref playerUnknownCommands, letterPowers) }
 			};
 
 			var maxDistance = Vector2.Distance(bossCell, RlConstants.Dungeon.playerStartPosition);
@@ -120,7 +147,7 @@ namespace _7DRL.Games {
 				if (result.ContainsKey(position)) continue;
 				if (rooms.Contains(position)) continue;
 
-				result.Add(position, GenerateEncounter(position, Vector2.Distance(RlConstants.Dungeon.playerStartPosition, position) / maxDistance, letterPowers));
+				result.Add(position, GenerateEncounter(position, Vector2.Distance(RlConstants.Dungeon.playerStartPosition, position) / maxDistance, ref playerUnknownCommands, letterPowers));
 			}
 
 			return result;
@@ -184,8 +211,7 @@ namespace _7DRL.Games {
 				playerUnknownCommands.Remove(skillInteraction.skill);
 			}
 			if (options == 1 || options == 2) { // power
-				var score = Mathf.RoundToInt(RlConstants.Dungeon.powerLetterScore * Vector2.Distance(position, RlConstants.Dungeon.playerStartPosition));
-				powerInteraction.letter = letterPowers.Keys.GetWithClosestScore(t => letterPowers[t], score);
+				powerInteraction.letter = TextUtils.allLetters.Random();
 				powerInteraction.interaction = new InteractionOption(Memory.interactionOptions[InteractionType.Power].Random(), $"the letter \"{powerInteraction.letter}\" to double its power.");
 			}
 

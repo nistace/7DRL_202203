@@ -6,6 +6,7 @@ using _7DRL.GameComponents;
 using _7DRL.GameComponents.Characters;
 using _7DRL.GameComponents.Dungeons;
 using _7DRL.GameComponents.Dungeons.Misc;
+using _7DRL.GameComponents.Interactions;
 using _7DRL.GameComponents.TextAndLetters;
 using _7DRL.Games;
 using _7DRL.MiscConstants;
@@ -283,21 +284,19 @@ namespace _7DRL.Scenes.Map {
 
 				var optionCommands = misc.interactionOptions.ToDictionary(t => t.inputValue, t => t);
 				InteractionOption inputInteraction = null;
-				yield return StartCoroutine(TextInputManager.ListenUntilResult(optionCommands, OnMiscInputChanged, interaction => inputInteraction = interaction));
+				yield return StartCoroutine(TextInputManager.ListenUntilResult(optionCommands, HandleDialogInputChanged, interaction => inputInteraction = interaction));
 				yield return StartCoroutine(ResolveMisc(misc, inputInteraction));
 
 				CommonGameUi.dialogPanel.Hide();
 			}
 		}
 
-		private static void OnMiscInputChanged(string input, InteractionOption preferred) => CommonGameUi.dialogPanel.SetCommandProgress(preferred.inputValue, input.Length);
-
 		private IEnumerator ResolveMisc(IDungeonMisc source, InteractionOption option) => GetResolveFunc(option.type)(source);
 
 		private Func<IDungeonMisc, IEnumerator> GetResolveFunc(InteractionType type) {
 			switch (type) {
 				case InteractionType.Chest: return ResolveMiscChest;
-				case InteractionType.Skip: return ResolveMiscSkip;
+				case InteractionType.Skip: return t => ResolveSkipInteraction();
 				case InteractionType.Read: return ResolveMiscRead;
 				case InteractionType.Skill: return ResolveMiscSkill;
 				case InteractionType.Power: return ResolveMiscPower;
@@ -305,10 +304,6 @@ namespace _7DRL.Scenes.Map {
 				case InteractionType.Portal: return ResolveMiscPortal;
 				default: throw new ArgumentOutOfRangeException();
 			}
-		}
-
-		private static IEnumerator ResolveMiscSkip(IDungeonMisc misc) {
-			yield return new WaitForSeconds(.5f);
 		}
 
 		private IEnumerator ResolveMiscChest(IDungeonMisc misc) {
@@ -331,27 +326,20 @@ namespace _7DRL.Scenes.Map {
 
 		private IEnumerator ResolveMiscSkill(IDungeonMisc misc) {
 			var stoneTabletOfKnowledge = misc as DungeonStoneTableOfKnowledge ?? throw new InvalidCastException();
-			yield return new WaitForSeconds(.5f);
-			Game.instance.playerCharacter.LearnCommand(stoneTabletOfKnowledge.skillCommand);
-			yield return new WaitForSeconds(.5f);
+			yield return StartCoroutine(ResolveSkillInteraction(stoneTabletOfKnowledge.skillCommand));
 			Destroy(tokens[misc].gameObject);
 			Game.instance.dungeonMap.RemoveMisc(misc);
 		}
 
 		private IEnumerator ResolveMiscPower(IDungeonMisc misc) {
 			var stoneTabletOfKnowledge = misc as DungeonStoneTableOfKnowledge ?? throw new InvalidCastException();
-			yield return new WaitForSeconds(.5f);
-			Game.instance.playerCharacter.EnhanceLetterPower(stoneTabletOfKnowledge.powerLetter, 2);
-			yield return new WaitForSeconds(.5f);
+			yield return StartCoroutine(ResolvePowerInteraction(stoneTabletOfKnowledge.powerLetter));
 			Destroy(tokens[misc].gameObject);
 			Game.instance.dungeonMap.RemoveMisc(misc);
 		}
 
 		private IEnumerator ResolveMiscMaxHealth(IDungeonMisc misc) {
-			yield return new WaitForSeconds(.5f);
-			// TODO
-			Debug.LogWarning("ResolveMiscMaxHealth not handled");
-			yield return new WaitForSeconds(.5f);
+			yield return StartCoroutine(ResolveMaxHealthInteraction());
 			Destroy(tokens[misc].gameObject);
 			Game.instance.dungeonMap.RemoveMisc(misc);
 		}

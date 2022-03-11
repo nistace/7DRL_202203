@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using _7DRL.GameComponents.Interactions;
 using _7DRL.GameComponents.TextAndLetters;
 using UnityEngine;
 using Utils.Extensions;

@@ -4,6 +4,7 @@ using System.Linq;
 using _7DRL.Data;
 using _7DRL.GameComponents.Characters;
 using _7DRL.GameComponents.Dungeons;
+using _7DRL.GameComponents.Interactions;
 using _7DRL.GameComponents.TextAndLetters;
 using UnityEngine;
 

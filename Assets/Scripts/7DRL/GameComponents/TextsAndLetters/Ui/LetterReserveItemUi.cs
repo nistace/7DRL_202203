@@ -11,7 +11,7 @@ namespace _7DRL.GameComponents.TextAndLetters.Ui {
 		}
 
 		public int amount {
-			set => _amount.text = $"{value}";
+			set => _amount.text = $"{Mathf.Clamp(value, 0, 99)}";
 		}
 
 		public Color color {

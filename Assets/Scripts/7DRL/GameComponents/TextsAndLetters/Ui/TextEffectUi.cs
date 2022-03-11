@@ -22,12 +22,7 @@ namespace _7DRL.GameComponents.TextAndLetters.Ui {
 
 		private void Awake() => instance = this;
 
-		[ContextMenu("Test")]
-		private void Test() {
-			StartCoroutine(ShowLineAndMoveLettersToReserve("THIS A TEST LINE", new Vector2(600, 200), FindObjectOfType<LetterReserveUi>()));
-		}
-
-		public static IEnumerator ShowLineAndMoveLettersToReserve(string line, Vector2 originScreenPosition, LetterReserveUi reserveUi, Action<char> letterArrivedCallback = null) {
+		public static IEnumerator ShowLineAndMoveLettersToReserve(string line, Vector2 originScreenPosition, LetterReserveUi reserveUi, ShowLineAndMoveLettersCallbacks callbacks = null) {
 			var lineUi = Instantiate(instance._lineAppearPrefab, instance.transform);
 			lineUi.text = line;
 			lineUi.alpha = 0;
@@ -38,6 +33,7 @@ namespace _7DRL.GameComponents.TextAndLetters.Ui {
 			}
 			lineUi.transform.position = originScreenPosition + instance._lineAppearOffset;
 			lineUi.alpha = 1;
+			callbacks?.onLineAppeared?.Invoke();
 			yield return new WaitForSeconds(instance._lineWaitTime);
 
 			var nextLetterProgress = 0f;
@@ -50,18 +46,19 @@ namespace _7DRL.GameComponents.TextAndLetters.Ui {
 				var origin = lineUi.letterAnchor;
 				var letter = lineUi.PopFirstLetter();
 				if (reserveUi.TryGetPosition(letter, out var reservePosition)) {
-					lastRoutine = instance.StartCoroutine(CreateLetterEffect(letter, origin, reservePosition, letterArrivedCallback));
+					lastRoutine = instance.StartCoroutine(CreateLetterEffect(letter, origin, reservePosition, callbacks?.letterEffect));
 				}
+				callbacks?.onLetterDetached?.Invoke(letter);
 				nextLetterProgress--;
 			}
 			if (lastRoutine != null) yield return lastRoutine;
 			Destroy(lineUi.gameObject);
 		}
 
-		public static IEnumerator CreateLetterEffect(char letter, Vector2 origin, LetterReserveUi reserveUi, Action<char> callback = null) =>
-			CreateLetterEffect(letter, origin, reserveUi.TryGetPosition(letter, out var reservePosition) ? reservePosition : null, callback);
+		public static IEnumerator CreateLetterEffect(char letter, Vector2 origin, LetterReserveUi reserveUi, CreateLetterEffectCallbacks callbacks = null) =>
+			CreateLetterEffect(letter, origin, reserveUi.TryGetPosition(letter, out var reservePosition) ? reservePosition : null, callbacks);
 
-		public static IEnumerator CreateLetterEffect(char letter, Vector2 origin, Transform destination, Action<char> callback = null) {
+		public static IEnumerator CreateLetterEffect(char letter, Vector2 origin, Transform destination, CreateLetterEffectCallbacks callbacks = null) {
 			var letterText = pool.Count > 0 ? pool.Dequeue() : Instantiate(instance._letterTextPrefab, instance.transform);
 			letterText.gameObject.SetActive(true);
 			letterText.transform.SetParent(destination);
@@ -78,7 +75,7 @@ namespace _7DRL.GameComponents.TextAndLetters.Ui {
 			pool.Enqueue(letterEffect.letterText);
 			letterEffect.letterText.gameObject.SetActive(false);
 			letterEffect.letterText.transform.SetParent(instance.transform);
-			callback?.Invoke(letter);
+			callbacks?.onLetterArrived?.Invoke(letter);
 		}
 
 		private class LetterEffect {
@@ -94,6 +91,17 @@ namespace _7DRL.GameComponents.TextAndLetters.Ui {
 				this.letterText = letterText;
 				this.velocity = velocity;
 			}
+		}
+
+		public class CreateLetterEffectCallbacks {
+			public Action<char> onLetterArrived { get; set; }
+		}
+
+		public class ShowLineAndMoveLettersCallbacks {
+			public CreateLetterEffectCallbacks letterEffect { get; } = new CreateLetterEffectCallbacks();
+
+			public Action       onLineAppeared   { get; set; }
+			public Action<char> onLetterDetached { get; set; }
 		}
 	}
 }

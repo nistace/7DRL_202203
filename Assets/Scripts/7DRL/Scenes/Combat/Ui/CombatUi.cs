@@ -2,10 +2,13 @@
 using UnityEngine;
 
 namespace _7DRL.Scenes.Combat.Ui {
+	[RequireComponent(typeof(Canvas))]
 	public class CombatUi : MonoBehaviour {
+		[SerializeField] protected Canvas                 _canvas;
 		[SerializeField] protected CombatCharacterBarUi   _playerBar;
 		[SerializeField] protected CombatCharacterBarUi[] _foeBars;
 
+		public Canvas                 canvas    => _canvas ? _canvas : _canvas = GetComponent<Canvas>();
 		public CombatCharacterBarUi   playerBar => _playerBar;
 		public CombatCharacterBarUi[] foeBars   => _foeBars;
 
@@ -16,5 +19,7 @@ namespace _7DRL.Scenes.Combat.Ui {
 				if (foes.Length > i) _foeBars[i].Set(foes[i]);
 			}
 		}
+
+		public void SetVisible(bool visible) => canvas.enabled = visible;
 	}
 }

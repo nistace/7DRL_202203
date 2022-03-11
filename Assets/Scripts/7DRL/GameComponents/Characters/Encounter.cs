@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using _7DRL.GameComponents.Interactions;
+using _7DRL.GameComponents.TextAndLetters;
 using UnityEngine;
 using UnityEngine.Events;
+using Utils.Extensions;
 using Utils.Libraries;
 
 namespace _7DRL.GameComponents.Characters {
@@ -31,10 +34,24 @@ namespace _7DRL.GameComponents.Characters {
 
 		public Sprite tokenSprite => Sprites.Of($"token.foe.{level}");
 
-		public Encounter(Level level, Vector2Int dungeonPosition, IEnumerable<Foe> foes) {
+		public InteractionOption              maxHealthInteraction    { get; }
+		public InteractionOption              skillInteraction        { get; }
+		public Command                        skillInteractionCommand { get; }
+		public InteractionOption              powerInteraction        { get; }
+		public char                           powerInteractionLetter  { get; }
+		public InteractionOption              skipInteraction         { get; }
+		public IEnumerable<InteractionOption> interactionOptions      { get; }
+
+		public Encounter(Level level, Vector2Int dungeonPosition, IEnumerable<Foe> foes, InteractionOption maxHealthInteraction, (InteractionOption, Command ) skillInteraction,
+			(InteractionOption, char) powerInteraction, InteractionOption skipInteraction) {
 			_foes = foes.ToArray();
 			_level = level;
 			_dungeonPosition = dungeonPosition;
+			this.maxHealthInteraction = maxHealthInteraction;
+			(this.skillInteraction, skillInteractionCommand) = skillInteraction;
+			(this.powerInteraction, powerInteractionLetter) = powerInteraction;
+			this.skipInteraction = skipInteraction;
+			interactionOptions = new[] { this.maxHealthInteraction, this.skillInteraction, this.powerInteraction, this.skipInteraction }.NotNull().ToArray();
 		}
 	}
 }

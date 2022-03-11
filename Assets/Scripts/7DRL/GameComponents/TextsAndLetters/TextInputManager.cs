@@ -56,6 +56,7 @@ namespace _7DRL.GameComponents.TextAndLetters {
 				yield return null;
 			}
 			StopListening();
+			AudioManager.Sfx.PlayRandom("input.complete");
 			completedCallback?.Invoke(options[preferredOption]);
 		}
 	}

@@ -13,7 +13,7 @@ namespace _7DRL.GameComponents.TextAndLetters {
 		public IReadOnlyList<string> Generate(int minScore, IReadOnlyDictionary<char, int> letterPowers) {
 			var score = 0;
 			var result = new List<string>();
-			while (score < minScore) {
+			while (score < minScore && result.Count < objects.Count) {
 				var newObject = objects.Random();
 				if (!result.Contains(newObject)) {
 					result.Add(newObject);
