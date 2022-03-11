@@ -106,6 +106,8 @@ GameObject:
   - component: {fileID: 8951368020231908020}
   - component: {fileID: 8951368020231908021}
   - component: {fileID: 8951368020231908022}
+  - component: {fileID: 209064058}
+  - component: {fileID: 209064070}
   m_Layer: 0
   m_Name: Visuals
   m_TagString: Untagged
@@ -168,7 +170,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 10
-  m_Sprite: {fileID: 21300000, guid: af70a3e8818c4bc4d917d49935581338, type: 3}
+  m_Sprite: {fileID: 21300000, guid: fd18dfe7c941e374dad9817fa02dd7b5, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -205,10 +207,37 @@ MonoBehaviour:
   - {fileID: 8951368019726885890}
   - {fileID: 8951368020737518387}
   m_Bounds:
-    m_Center: {x: -0.4999981, y: 0.63949585, z: 0}
-    m_Extent: {x: 30.500004, y: 31.132504, z: 0}
+    m_Center: {x: 0.5304136, y: 14.469425, z: 0}
+    m_Extent: {x: 13.794897, y: 18.031055, z: 0}
   m_UseBatching: 1
   m_AlwaysUpdate: 1
+--- !u!114 &209064058
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8951368020231908019}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c29cff538c195c249b69c6f2236de67b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_SpriteLibraryAsset: {fileID: 11400000, guid: 43be51ff1efb34c429397c5e2fcfea16, type: 2}
+--- !u!114 &209064070
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8951368020231908019}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed8b1ae4e4e52b34ea557c1c11e076fc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_CategoryHash: 5.636657e-31
+  m_labelHash: 8.840178e-23
 --- !u!1 &8951368020413346648
 GameObject:
   m_ObjectHideFlags: 0
@@ -440,6 +469,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _animator: {fileID: 8951368021032220655}
   _spriteRenderer: {fileID: 8951368020231908021}
+  _spriteResolver: {fileID: 209064070}
   _headTransform: {fileID: 8951368020556648873}
 --- !u!95 &8951368021032220655
 Animator:

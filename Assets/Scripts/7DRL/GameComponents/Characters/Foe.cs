@@ -4,6 +4,7 @@ using System.Linq;
 using _7DRL.GameComponents.TextAndLetters;
 using UnityEngine;
 using Utils.Extensions;
+using Random = UnityEngine.Random;
 
 namespace _7DRL.GameComponents.Characters {
 	[Serializable]
@@ -15,14 +16,15 @@ namespace _7DRL.GameComponents.Characters {
 		[SerializeField] protected int     _currentCommandProgress;
 		[SerializeField] protected float   _powerCoefficient;
 
-		public override string name                         => _type.name;
-		public override string currentCommandLetters        => currentCommand.inputName.Substring(0, _currentCommandProgress);
-		public override string currentCommandMissingLetters => currentCommand.inputName.Substring(_currentCommandProgress);
-
-		public Command currentCommand => _knownCommands[_currentCommandIndex];
+		public override string  name                         => _type.name;
+		public          byte    spriteSeed                   { get; }
+		public override string  currentCommandLetters        => currentCommand.inputName.Substring(0, _currentCommandProgress);
+		public override string  currentCommandMissingLetters => currentCommand.inputName.Substring(_currentCommandProgress);
+		public          Command currentCommand               => _knownCommands[_currentCommandIndex];
 
 		public Foe(FoeType type, int level, int maxHealth, float powerCoefficient, IEnumerable<Command> knownCommands) : base(level, maxHealth, knownCommands.ToList().Shuffled()) {
 			_type = type;
+			spriteSeed = (byte)Random.Range(0, byte.MaxValue);
 			_currentCommandIndex = 0;
 			_powerCoefficient = powerCoefficient;
 		}

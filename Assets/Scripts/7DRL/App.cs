@@ -33,6 +33,9 @@ namespace _7DRL {
 		}
 
 		private IEnumerator Init() {
+			// TODO show first screen.
+			// TODO show end screen.
+			// Handle starting a new game.
 			_loadingScreen.SetProgress(0);
 			Colors.LoadLibrary(Resources.LoadAll<ColorLibrary>("Libraries").FirstOrDefault());
 			AudioClips.LoadLibrary(Resources.LoadAll<AudioClipLibrary>("Libraries").FirstOrDefault());

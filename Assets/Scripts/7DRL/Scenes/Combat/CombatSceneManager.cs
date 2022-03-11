@@ -18,7 +18,7 @@ namespace _7DRL.Scenes.Combat {
 		[SerializeField] protected CombatUi        _ui;
 		[SerializeField] protected CombatScene     _combatScene;
 		[SerializeField] protected CombatCharacter _combatCharacterPrefab;
-		[SerializeField] protected Vector3         _cameraPosition = Vector3.zero;
+		[SerializeField] protected Vector3         _cameraOffset = Vector3.back;
 
 		private enum BattleStep {
 			Player = 0,
@@ -46,6 +46,11 @@ namespace _7DRL.Scenes.Combat {
 				yield return StartCoroutine(DoCurrentTurn());
 				battleStep = (BattleStep)((int)(battleStep + 1) % EnumUtils.SizeOf<BattleStep>());
 			}
+
+			//TODO show cursor over currently playing character
+			//TODO manage player dead
+			//TODO level up player
+			//TODO create different visuals for the characters
 		}
 
 		private IEnumerator DoCurrentTurn() {
@@ -54,8 +59,7 @@ namespace _7DRL.Scenes.Combat {
 			switch (battleStep) {
 				case BattleStep.Player: return DoPlayerTurn();
 				case BattleStep.Foes: return DoFoesTurn();
-				default:
-					throw new ArgumentOutOfRangeException();
+				default: throw new ArgumentOutOfRangeException();
 			}
 		}
 
@@ -76,7 +80,6 @@ namespace _7DRL.Scenes.Combat {
 		}
 
 		private void InitBattle() {
-			CameraUtils.main.transform.position = _cameraPosition;
 			Game.instance.playerCharacter.ResetForBattle();
 			playerEscaped = false;
 
@@ -84,14 +87,19 @@ namespace _7DRL.Scenes.Combat {
 			combatCharacters.Values.ForEach(t => Destroy(t.gameObject));
 			combatCharacters.Clear();
 			combatCharacters.Add(Game.instance.playerCharacter, _combatScene.player);
-			_combatScene.player.Init(true);
+			_combatScene.player.Init(0, false);
+			var farthestFoePosition = Vector3.zero;
 			for (var foeIndex = 0; foeIndex < encounter.foes.Length; foeIndex++) {
 				encounter.foes[foeIndex].ResetForBattle();
-				var foeCharacter = Instantiate(_combatCharacterPrefab, Vector3.zero, Quaternion.identity, _combatScene.GetFoePosition(foeIndex));
+				var foePosition = _combatScene.GetFoePosition(foeIndex);
+				var foeCharacter = Instantiate(_combatCharacterPrefab, Vector3.zero, Quaternion.identity, foePosition);
 				foeCharacter.transform.localPosition = Vector3.zero;
-				foeCharacter.Init(false);
+				foeCharacter.Init(encounter.foes[foeIndex].spriteSeed, true);
 				combatCharacters.Add(encounter.foes[foeIndex], foeCharacter);
+				farthestFoePosition = foePosition.position;
 			}
+
+			CameraUtils.main.transform.position = (farthestFoePosition + _combatScene.playerPosition.position) / 2 + _cameraOffset;
 
 			_ui.InitBars(Game.instance.playerCharacter, encounter.foes);
 			battleStep = BattleStep.Player;
@@ -126,10 +134,10 @@ namespace _7DRL.Scenes.Combat {
 		private static void OnPlayerInputChanged(string input, Command preferredCommand) => Game.instance.playerCharacter.SetCurrentCommand(input, CommandType.Location.Combat);
 
 		private IEnumerator ResolveCommand(CharacterBase source, CharacterBase target, Command command) {
-			yield return StartCoroutine(GetCommandAction(command)(source, target, source.GetCommandPower(command)));
+			yield return StartCoroutine(GetCommandAction(command)(source, target, command));
 		}
 
-		private Func<CharacterBase, CharacterBase, int, IEnumerator> GetCommandAction(Command command) {
+		private Func<CharacterBase, CharacterBase, Command, IEnumerator> GetCommandAction(Command command) {
 			if (command.type == Memory.CommandTypes.attack) return ResolveAttackCommand;
 			if (command.type == Memory.CommandTypes.defense) return ResolveDefenseCommand;
 			if (command.type == Memory.CommandTypes.heal) return ResolveHealCommand;
@@ -139,7 +147,7 @@ namespace _7DRL.Scenes.Combat {
 			throw new ArgumentException($"Command type {command.type.name} is not handled");
 		}
 
-		private IEnumerator ResolveAttackCommand(CharacterBase source, CharacterBase target, int power) {
+		private IEnumerator ResolveAttackCommand(CharacterBase source, CharacterBase target, Command command) {
 			combatCharacters[source].PlayAttack();
 			var dodged = target.RollDodge();
 			if (dodged) {
@@ -152,7 +160,7 @@ namespace _7DRL.Scenes.Combat {
 			}
 			yield return new WaitForSeconds(.5f);
 			if (!dodged) {
-				target.Damage(power);
+				target.Damage(source.GetCommandPower(command));
 				if (target.dead) {
 					AudioManager.Sfx.PlayRandom("combat.attack.dead");
 					combatCharacters[target].SetDead(true);
@@ -161,8 +169,8 @@ namespace _7DRL.Scenes.Combat {
 					if (source == Game.instance.playerCharacter) {
 						var targetPosition = CameraUtils.main.WorldToScreenPoint(combatCharacters[target].transform.position);
 						yield return StartCoroutine(EarnLetters(target.name, targetPosition));
-						foreach (var command in target.knownCommands) {
-							yield return StartCoroutine(EarnLetters(command.inputName, targetPosition));
+						foreach (var targetKnownCommand in target.knownCommands) {
+							yield return StartCoroutine(EarnLetters(targetKnownCommand.inputName, targetPosition));
 						}
 					}
 				}
@@ -171,21 +179,12 @@ namespace _7DRL.Scenes.Combat {
 			if (dodged) target.ResetChanceToDodge();
 		}
 
-		private IEnumerator ResolveRestCommand(CharacterBase source, CharacterBase target, int power) {
-			yield return new WaitForSeconds(.5f);
-			if (source != Game.instance.playerCharacter) throw new ArgumentException($"{source.completeName} is not allowed to play a rest action.");
-			Coroutine lastCoroutine = null;
-			foreach (var letter in power.CreateArray(t => TextUtils.allLetters.Random())) {
-				lastCoroutine = StartCoroutine(EarnLetter(letter, CameraUtils.main.WorldToScreenPoint(combatCharacters[source].headTransform.position)));
-				yield return new WaitForSeconds(.1f);
-			}
+		private IEnumerator ResolveRestCommand(CharacterBase source, CharacterBase target, Command command) =>
+			ResolveRestCommand(command, CameraUtils.main.WorldToScreenPoint(combatCharacters[source].headTransform.position));
 
-			if (lastCoroutine != null) yield return lastCoroutine;
-		}
-
-		private IEnumerator ResolveEscapeCommand(CharacterBase source, CharacterBase target, int power) {
+		private IEnumerator ResolveEscapeCommand(CharacterBase source, CharacterBase target, Command command) {
 			yield return new WaitForSeconds(.5f);
-			source.AddChanceToEscape(power);
+			source.AddChanceToEscape(source.GetCommandPower(command));
 			var escaped = source.RollEscape();
 			combatCharacters[source].PlayEscape(escaped);
 			AudioManager.Sfx.PlayRandom($"combat.escape.{(escaped ? "success" : "fail")}");
@@ -194,27 +193,27 @@ namespace _7DRL.Scenes.Combat {
 			yield return new WaitForSeconds(.5f);
 		}
 
-		private IEnumerator ResolveDodgeCommand(CharacterBase source, CharacterBase target, int power) {
+		private IEnumerator ResolveDodgeCommand(CharacterBase source, CharacterBase target, Command command) {
 			combatCharacters[source].PlayDodge();
 			AudioManager.Sfx.PlayRandom("combat.attack.dodge");
 			yield return new WaitForSeconds(.5f);
-			source.AddChanceToDodge(power);
+			source.AddChanceToDodge(source.GetCommandPower(command));
 			yield return new WaitForSeconds(.5f);
 		}
 
-		private IEnumerator ResolveHealCommand(CharacterBase source, CharacterBase target, int power) {
+		private IEnumerator ResolveHealCommand(CharacterBase source, CharacterBase target, Command command) {
 			combatCharacters[source].PlayHeal();
 			AudioManager.Sfx.PlayRandom("combat.heal");
 			yield return new WaitForSeconds(.5f);
-			source.Heal(power);
+			source.Heal(source.GetCommandPower(command));
 			yield return new WaitForSeconds(.5f);
 		}
 
-		private IEnumerator ResolveDefenseCommand(CharacterBase source, CharacterBase target, int power) {
+		private IEnumerator ResolveDefenseCommand(CharacterBase source, CharacterBase target, Command command) {
 			combatCharacters[source].PlayDefense();
 			AudioManager.Sfx.PlayRandom("combat.armor");
 			yield return new WaitForSeconds(.5f);
-			source.AddArmor(power);
+			source.AddArmor(source.GetCommandPower(command));
 			yield return new WaitForSeconds(.5f);
 		}
 	}

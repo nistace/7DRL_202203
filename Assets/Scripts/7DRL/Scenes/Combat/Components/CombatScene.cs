@@ -7,7 +7,8 @@ public class CombatScene : MonoBehaviour {
 	[SerializeField] protected Transform       _playerPosition;
 	[SerializeField] protected Transform[]     _foesPositions;
 
-	public CombatCharacter player => _player;
+	public CombatCharacter player         => _player;
+	public Transform       playerPosition => _playerPosition;
 
 	private void Update() {
 		var worldScreenHeight = (float)(CameraUtils.main.orthographicSize * 2.0);

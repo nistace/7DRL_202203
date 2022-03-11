@@ -1,9 +1,12 @@
-﻿using UnityEngine;
+﻿using System.Linq;
+using UnityEngine;
+using UnityEngine.Experimental.U2D.Animation;
 
 namespace _7DRL.Scenes.Combat {
 	public class CombatCharacter : MonoBehaviour {
 		[SerializeField] protected Animator       _animator;
 		[SerializeField] protected SpriteRenderer _spriteRenderer;
+		[SerializeField] protected SpriteResolver _spriteResolver;
 		[SerializeField] protected Transform      _headTransform;
 
 		private static readonly int restartAnimParam       = Animator.StringToHash("Restart");
@@ -18,8 +21,8 @@ namespace _7DRL.Scenes.Combat {
 
 		public Transform headTransform => _headTransform;
 
-		public void Init(bool faceRight) {
-			if (_animator && _animator.runtimeAnimatorController) {
+		public void Init(byte spriteSeed, bool foe) {
+			if (_animator && _animator.isActiveAndEnabled) {
 				_animator.SetTrigger(restartAnimParam);
 				_animator.ResetTrigger(attackAnimParam);
 				_animator.ResetTrigger(damagedAnimParam);
@@ -31,7 +34,10 @@ namespace _7DRL.Scenes.Combat {
 				_animator.SetBool(deadAnimParam, false);
 			}
 			_spriteRenderer.color = Color.white;
-			_spriteRenderer.flipX = !faceRight;
+			_spriteRenderer.flipX = foe;
+			var spriteCategory = foe ? "Foes" : "Player";
+			var spriteOptions = _spriteResolver.spriteLibrary.spriteLibraryAsset.GetCategoryLabelNames(spriteCategory).ToArray();
+			_spriteResolver.SetCategoryAndLabel(spriteCategory, spriteOptions[spriteSeed % spriteOptions.Length]);
 		}
 
 		public void PlayAttack() => _animator.SetTrigger(attackAnimParam);

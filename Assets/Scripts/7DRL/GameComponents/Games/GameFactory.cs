@@ -43,8 +43,10 @@ namespace _7DRL.Games {
 		}
 
 		private static Dictionary<char, int> GenerateDefaultLetterPowers() {
-			var allInputNames = Memory.commands.Select(t => t.inputName).Union(Memory.foeTypes.Select(t => t.inputName))
-				.Union(Memory.interactionOptions.Values.SelectMany(t => t).Select(t => t.inputValue)).ToArray();
+			var allInputNames = Memory.commands.Select(t => t.inputName)
+				//	.Union(Memory.foeTypes.Select(t => t.inputName))
+				//	.Union(Memory.interactionOptions.Values.SelectMany(t => t).Select(t => t.inputValue))
+				.ToArray();
 			var totalLetters = allInputNames.Sum(t => t.Length);
 			return TextUtils.allLetters.ToDictionary(c => c, c => totalLetters / allInputNames.Sum(t => t.Count(u => u == c)));
 		}
@@ -137,10 +139,13 @@ namespace _7DRL.Games {
 				result.Add(portal1, GeneratePortal(portal1, portal0));
 			}
 
+			// TODO generate fountain
+
 			while (remainingRooms.Count > 0) {
 				var position = remainingRooms.Pop();
 				if (remainingRooms.Count % 2 == 0) result.Add(position, GenerateChest(letterPowers, position));
 				else result.Add(position, GenerateStoneTableOfKnowledge(letterPowers, ref playerUnknownCommands, position));
+				//TODO Generate Training Dummy
 			}
 			return result;
 		}

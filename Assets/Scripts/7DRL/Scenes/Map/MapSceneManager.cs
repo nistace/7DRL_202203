@@ -11,6 +11,7 @@ using _7DRL.Games;
 using _7DRL.MiscConstants;
 using _7DRL.Ui;
 using UnityEngine;
+using Utils.Audio;
 using Utils.Extensions;
 using Utils.Libraries;
 
@@ -147,8 +148,7 @@ namespace _7DRL.Scenes.Map {
 			Command command = null;
 			yield return StartCoroutine(TextInputManager.ListenUntilResult(commands, OnPlayerInputChanged, t => command = t));
 			yield return new WaitForSeconds(1);
-			var power = Game.instance.playerCharacter.GetCommandPower(command);
-			yield return StartCoroutine(ResolvePlayerCommand(command, power));
+			yield return StartCoroutine(ResolvePlayerCommand(command));
 			Game.instance.playerCharacter.SetCurrentCommand(string.Empty, CommandType.Location.Map);
 		}
 
@@ -223,27 +223,32 @@ namespace _7DRL.Scenes.Map {
 			if (Game.instance.dungeonMap.TryGetEncounter(position, out var encounter)) tokens[encounter].visible = true;
 		}
 
-		private IEnumerator ResolvePlayerCommand(Command command, int power) {
-			yield return StartCoroutine(GetPlayerCommandAction(command)(power));
+		private IEnumerator ResolvePlayerCommand(Command command) {
+			yield return StartCoroutine(GetPlayerCommandAction(command.type)(command));
 		}
 
-		private Func<int, IEnumerator> GetPlayerCommandAction(Command command) {
-			if (command.type == Memory.CommandTypes.moveNorth) return ResolveMoveNorthCommand;
-			if (command.type == Memory.CommandTypes.moveSouth) return ResolveMoveSouthCommand;
-			if (command.type == Memory.CommandTypes.moveWest) return ResolveMoveWestCommand;
-			if (command.type == Memory.CommandTypes.moveEast) return ResolveMoveEastCommand;
-			Debug.LogError($"Command type {command.type.name} is not handled");
-			return ResolveDefaultCommand;
+		private Func<Command, IEnumerator> GetPlayerCommandAction(CommandType type) {
+			if (type == Memory.CommandTypes.moveNorth) return ResolveMoveNorthCommand;
+			if (type == Memory.CommandTypes.moveSouth) return ResolveMoveSouthCommand;
+			if (type == Memory.CommandTypes.moveWest) return ResolveMoveWestCommand;
+			if (type == Memory.CommandTypes.moveEast) return ResolveMoveEastCommand;
+			if (type == Memory.CommandTypes.heal) return ResolveHealCommand;
+			if (type == Memory.CommandTypes.rest) return ResolveRestCommand;
+			throw new ArgumentException($"Command type {type.name} is not handled");
 		}
 
-		private static IEnumerator ResolveDefaultCommand(int power) {
-			yield return null;
+		private static IEnumerator ResolveHealCommand(Command command) {
+			AudioManager.Sfx.PlayRandom("combat.heal");
+			yield return new WaitForSeconds(.5f);
+			Game.instance.playerCharacter.Heal(Game.instance.playerCharacter.GetCommandPower(command));
+			yield return new WaitForSeconds(.5f);
 		}
 
-		private IEnumerator ResolveMoveNorthCommand(int power) => ResolveMoveCommand(DungeonMap.Direction.North);
-		private IEnumerator ResolveMoveSouthCommand(int power) => ResolveMoveCommand(DungeonMap.Direction.South);
-		private IEnumerator ResolveMoveWestCommand(int power) => ResolveMoveCommand(DungeonMap.Direction.West);
-		private IEnumerator ResolveMoveEastCommand(int power) => ResolveMoveCommand(DungeonMap.Direction.East);
+		private IEnumerator ResolveRestCommand(Command command) => ResolveRestCommand(command, CameraUtils.main.WorldToScreenPoint(tokens[Game.instance.playerCharacter].position));
+		private IEnumerator ResolveMoveNorthCommand(Command command) => ResolveMoveCommand(DungeonMap.Direction.North);
+		private IEnumerator ResolveMoveSouthCommand(Command command) => ResolveMoveCommand(DungeonMap.Direction.South);
+		private IEnumerator ResolveMoveWestCommand(Command command) => ResolveMoveCommand(DungeonMap.Direction.West);
+		private IEnumerator ResolveMoveEastCommand(Command command) => ResolveMoveCommand(DungeonMap.Direction.East);
 
 		private IEnumerator ResolveMoveCommand(DungeonMap.Direction direction) {
 			playerPreviousPosition = Game.instance.playerCharacter.dungeonPosition;
@@ -344,6 +349,7 @@ namespace _7DRL.Scenes.Map {
 
 		private IEnumerator ResolveMiscMaxHealth(IDungeonMisc misc) {
 			yield return new WaitForSeconds(.5f);
+			// TODO
 			Debug.LogWarning("ResolveMiscMaxHealth not handled");
 			yield return new WaitForSeconds(.5f);
 			Destroy(tokens[misc].gameObject);

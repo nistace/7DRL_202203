@@ -6033,6 +6033,14 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 2103105398}
     m_Modifications:
+    - target: {fileID: 209064070, guid: d685ba751509165469a963c3ab837ca8, type: 3}
+      propertyPath: m_labelHash
+      value: -1.3936018e+32
+      objectReference: {fileID: 0}
+    - target: {fileID: 209064070, guid: d685ba751509165469a963c3ab837ca8, type: 3}
+      propertyPath: m_CategoryHash
+      value: -7.686712e-20
+      objectReference: {fileID: 0}
     - target: {fileID: 8951368019726885890, guid: d685ba751509165469a963c3ab837ca8, type: 3}
       propertyPath: m_LocalPosition.x
       value: 14.919544
@@ -6043,19 +6051,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8951368019726885890, guid: d685ba751509165469a963c3ab837ca8, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.274695
+      value: 0.35836807
       objectReference: {fileID: 0}
     - target: {fileID: 8951368019726885890, guid: d685ba751509165469a963c3ab837ca8, type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8951368019726885890, guid: d685ba751509165469a963c3ab837ca8, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8951368019726885890, guid: d685ba751509165469a963c3ab837ca8, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0.96153146
+      value: 0.9335804
       objectReference: {fileID: 0}
     - target: {fileID: 8951368019726885890, guid: d685ba751509165469a963c3ab837ca8, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
+      value: 138
       objectReference: {fileID: 0}
     - target: {fileID: 8951368020039213396, guid: d685ba751509165469a963c3ab837ca8, type: 3}
       propertyPath: m_LocalPosition.x
@@ -6108,7 +6120,7 @@ PrefabInstance:
     - target: {fileID: 8951368020231908021, guid: d685ba751509165469a963c3ab837ca8, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: af70a3e8818c4bc4d917d49935581338, type: 3}
+      objectReference: {fileID: 21300000, guid: f501d15337e757144a3b2ffcc1e9641c, type: 3}
     - target: {fileID: 8951368020231908021, guid: d685ba751509165469a963c3ab837ca8, type: 3}
       propertyPath: m_Color.b
       value: 1
