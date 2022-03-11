@@ -48,7 +48,6 @@ namespace _7DRL.Scenes.Combat {
 
 			yield return StartCoroutine(_ui.cursor.Change(Color.white.With(a: 0), _ui.cursor.position));
 			_ui.SetVisible(false);
-
 			yield return StartCoroutine(ResolveBattle());
 
 			//TODO manage player dead
@@ -69,6 +68,10 @@ namespace _7DRL.Scenes.Combat {
 				GameEvents.onEncounterDefeated.Invoke(encounter);
 				yield break;
 			}
+			if (!CanPlayAnyCommand()) {
+				GameEvents.onPlayerLost.Invoke();
+				yield break;
+			}
 			throw new ArgumentException("Cannot resolve the battle when no possible outcome has been reached");
 		}
 
@@ -76,8 +79,12 @@ namespace _7DRL.Scenes.Combat {
 			if (playerEscaped) return true;
 			if (Game.instance.playerCharacter.dead) return true;
 			if (encounter.foes.All(t => t.dead)) return true;
+			if (!CanPlayAnyCommand()) return true;
 			return false;
 		}
+
+		private static bool CanPlayAnyCommand() =>
+			Game.instance.playerCharacter.knownCommands.Any(t => t.type.IsUsable(CommandType.Location.Combat) && Game.instance.playerCharacter.letterReserve.CanPay(t.textInput));
 
 		private IEnumerator ResolveLevelUpDialog() {
 			Game.instance.playerCharacter.SetCurrentCommand(string.Empty, CommandType.Location.Combat);

@@ -39,9 +39,11 @@ namespace _7DRL.GameComponents.TextAndLetters {
 		public void Add(string word) => word.ForEach(t => Add(t));
 
 		public bool TryRemove(string word) {
-			if (!TextUtils.allLetters.All(c => this[c] >= word.Count(t => t == c))) return false;
+			if (!CanPay(word)) return false;
 			word.ForEach(t => Remove(t));
 			return true;
 		}
+
+		public bool CanPay(string word) => TextUtils.allLetters.All(c => this[c] >= word.Count(t => t == c));
 	}
 }

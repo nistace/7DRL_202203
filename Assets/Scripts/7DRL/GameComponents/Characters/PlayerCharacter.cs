@@ -32,9 +32,8 @@ namespace _7DRL.GameComponents.Characters {
 			set => _dungeonPosition = value;
 		}
 
-
-		public PlayerCharacter(IEnumerable<int> defaultLetterPowers, IReadOnlyDictionary<char, int> playerInitialLetters, IEnumerable<Command> playerInitialCommands) : base(1,
-			TextUtils.GetValueOfRaw(RlConstants.Player.name, playerInitialLetters), playerInitialCommands) {
+		public PlayerCharacter(IReadOnlyList<int> defaultLetterPowers, IReadOnlyDictionary<char, int> playerInitialLetters, IEnumerable<Command> playerInitialCommands) : base(1,
+			Mathf.RoundToInt(TextUtils.GetValueOfRaw(RlConstants.Player.name, defaultLetterPowers) * RlConstants.Player.maxHealthCoefficient), playerInitialCommands) {
 			_letterPowers = new List<int>(defaultLetterPowers);
 			_letterReserve = new LetterReserve();
 			playerInitialLetters.ForEach(t => _letterReserve.Add(t.Key, t.Value));

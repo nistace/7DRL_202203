@@ -7,6 +7,9 @@
 		Power,
 		MaxHealth,
 		Portal,
-		Fountain
+		Fountain,
+		GameOverVictory,
+		GameOverLost,
+		GameOverDead
 	}
 }

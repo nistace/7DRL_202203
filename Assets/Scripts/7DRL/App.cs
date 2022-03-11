@@ -6,6 +6,7 @@ using _7DRL.Input.Controls;
 using _7DRL.MiscConstants;
 using _7DRL.Scenes;
 using _7DRL.Scenes.Combat;
+using _7DRL.Scenes.GameOver;
 using _7DRL.Scenes.Map;
 using _7DRL.Ui;
 using UnityEngine;
@@ -15,10 +16,11 @@ using Utils.Loading;
 
 namespace _7DRL {
 	public class App : MonoBehaviour {
-		[SerializeField] protected Game               _currentGame;
-		[SerializeField] protected MapSceneManager    _mapManager;
-		[SerializeField] protected CombatSceneManager _combatManager;
-		[SerializeField] protected LoadingCanvas      _loadingScreen;
+		[SerializeField] protected Game                  _currentGame;
+		[SerializeField] protected MapSceneManager       _mapManager;
+		[SerializeField] protected CombatSceneManager    _combatManager;
+		[SerializeField] protected GameOverScreenManager _gameOverManager;
+		[SerializeField] protected LoadingCanvas         _loadingScreen;
 
 		private SceneManager currentScene { get; set; }
 
@@ -26,15 +28,17 @@ namespace _7DRL {
 			_loadingScreen.SetVisible();
 			_combatManager.Disable();
 			_mapManager.Disable();
+			_gameOverManager.Disable();
 			GameEvents.onEncounterAtPlayerPosition.AddListenerOnce(HandleEncounterAtPlayerPosition);
 			GameEvents.onEncounterDefeated.AddListenerOnce(HandleEncounterDefeated);
 			GameEvents.onPlayerFledBattle.AddListenerOnce(HandlePlayerFled);
+			GameEvents.onPlayerLost.AddListenerOnce(HandlePlayerLost);
+			GameEvents.onPlayerDead.AddListenerOnce(HandlePlayerDead);
 			StartCoroutine(Init());
 		}
 
 		private IEnumerator Init() {
 			// TODO show first screen.
-			// TODO show end screen.
 			// Handle starting a new game.
 			_loadingScreen.SetProgress(0);
 			Colors.LoadLibrary(Resources.LoadAll<ColorLibrary>("Libraries").FirstOrDefault());
@@ -67,15 +71,7 @@ namespace _7DRL {
 			_mapManager.Continue();
 		}
 
-		private void HandleEncounterDefeated(Encounter defeatedEncounter) {
-			if (defeatedEncounter.level == Encounter.Level.Boss) {
-				Debug.Log("You win !");
-			}
-			else {
-				StartCoroutine(MoveToMap());
-			}
-		}
-
+		private void HandleEncounterDefeated(Encounter defeatedEncounter) => StartCoroutine(defeatedEncounter.level == Encounter.Level.Boss ? ShowGameOver(GameOverType.Victory) : MoveToMap());
 		private void HandleEncounterAtPlayerPosition(Encounter encounter) => StartCoroutine(MoveToCombat(encounter));
 		private void HandlePlayerFled() => StartCoroutine(MoveToMap());
 
@@ -89,6 +85,21 @@ namespace _7DRL {
 			yield return new WaitForSeconds(.3f);
 			yield return StartCoroutine(_loadingScreen.DoFadeOut());
 			_combatManager.StartBattle();
+		}
+
+		private void HandlePlayerLost() => StartCoroutine(ShowGameOver(GameOverType.Lost));
+		private void HandlePlayerDead() => StartCoroutine(ShowGameOver(GameOverType.Dead));
+
+		private IEnumerator ShowGameOver(GameOverType type) {
+			_loadingScreen.SetProgress(0);
+			yield return StartCoroutine(_loadingScreen.DoFadeIn());
+			if (currentScene) currentScene.Disable();
+			currentScene = _gameOverManager;
+			if (currentScene) currentScene.Enable();
+			yield return null;
+			_gameOverManager.Show(type);
+			yield return new WaitForSeconds(.3f);
+			yield return StartCoroutine(_loadingScreen.DoFadeOut());
 		}
 	}
 }

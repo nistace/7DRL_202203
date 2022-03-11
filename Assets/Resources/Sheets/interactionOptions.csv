@@ -33,3 +33,20 @@ portal,1,penetrate,the portal and meet on the other side.
 portal,1,step,in the portal and see what's on the other side.
 portal,1,dive,in the portal and see what's on the other side.
 portal,1,traverse,the portal and meet on the other side.
+gameOverLost,1,cry,"your last tears, waiting for help that will never come."
+gameOverLost,1,sob,out loud like no one can hear you.
+gameOverLost,1,shed,tears waiting for help that will never come.
+gameOverLost,1,wail,"softly, thinking that you will never see the light again."
+gameOverLost,1,bawl,while you wait for help that will never come.
+gameOverLost,1,snivel,while you wait for help that will never come.
+gameOverLost,1,whine,"softly, thinking that you will never see the light again."
+gameOverLost,0,despair,"in silence, as you don't even have any tears to shed."
+gameOverVictory,1,triumph,"and celebrate loudly, as the enemy is defeated for good."
+gameOverVictory,1,exult,as the enemy is defeated for good.
+gameOverVictory,1,celebrate,"your achievement, as the enemy is defeated for good."
+gameOverVictory,1,rejoice,as the enemy is defeated for good.
+gameOverVictory,0,triumph,"silently, as this journey was very exhausting."
+gameOverDead,1,agonize,"calmly, using your last strength before fainting."
+gameOverDead,1,take,your last breath and faint.
+gameOverDead,1,leave,"gently, defeated by stronger than you."
+gameOverDead,0,faint,"for good, as you don't even have the strength to agonize."

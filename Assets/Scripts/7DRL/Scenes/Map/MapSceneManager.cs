@@ -124,8 +124,6 @@ namespace _7DRL.Scenes.Map {
 				yield return StartCoroutine(DoCurrentTurnStep());
 				Game.instance.NextTurnStep();
 			}
-
-			//TODO manage no valid command
 		}
 
 		private IEnumerator DoCurrentTurnStep() {
@@ -140,6 +138,11 @@ namespace _7DRL.Scenes.Map {
 		private static bool TryInterruptScene() {
 			if (Game.instance.dungeonMap.TryGetEncounter(Game.instance.playerCharacter.dungeonPosition, out var encounter)) {
 				GameEvents.onEncounterAtPlayerPosition.Invoke(encounter);
+				return true;
+			}
+			if (Game.instance.turnStep == Game.TurnStep.Player
+				&& !Game.instance.playerCharacter.knownCommands.Any(t => t.type.IsUsable(CommandType.Location.Map) && CanExecute(t) && Game.instance.playerCharacter.letterReserve.CanPay(t.textInput))) {
+				GameEvents.onPlayerLost.Invoke();
 				return true;
 			}
 			return false;
