@@ -14,8 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _id:
     _value: 3
-  _descriptionPattern: Heals <b>[POW]</b> HP.
+  _descriptionPattern: Heals <b>[POW]</b> health points.
   _powerMultiplier: 1
   _minPower: 1
   _maxPower: 2147483647
   _usedInLocations: -1
+  _initialPlayerAmount: 1
+  _initialLetterAmountCoefficient: 1

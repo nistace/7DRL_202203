@@ -7,6 +7,13 @@ namespace _7DRL.GameComponents.TextAndLetters.Ui {
 	public class LetterReserveUi : MonoBehaviour {
 		[SerializeField] protected LetterReserveItemUi _itemPrefab;
 		[SerializeField] protected Transform           _container;
+		[SerializeField] protected float               _letterFlashTime = .5f;
+
+		public enum FlashType {
+			Add,
+			Remove,
+			Missing
+		}
 
 		private LetterReserve                         reserve { get; set; }
 		private Dictionary<char, LetterReserveItemUi> items   { get; } = new Dictionary<char, LetterReserveItemUi>();
@@ -26,10 +33,11 @@ namespace _7DRL.GameComponents.TextAndLetters.Ui {
 		private void Refresh() {
 			for (var c = 'A'; c <= 'Z'; c++) {
 				items[c].amount = reserve[c];
-				items[c].color = Colors.Of($"ui.text.player.{(reserve[c] > 0 ? "active" : "inactive")}");
+				items[c].defaultColor = Colors.Of($"ui.text.player.{(reserve[c] > 0 ? "active" : "inactive")}");
 			}
 		}
 
 		public bool TryGetPosition(char letter, out Transform position) => position = items.ContainsKey(letter) ? items[letter].transform : null;
+		public void FlashLine(char c, FlashType type) => StartCoroutine(items[c].Flash(Colors.Of($"letterReserve.flash.{type}"), _letterFlashTime));
 	}
 }

@@ -51,8 +51,8 @@ namespace _7DRL.Scenes.Combat {
 
 			yield return StartCoroutine(ResolveBattle());
 
-			//TODO show cursor over currently playing character
 			//TODO manage player dead
+			//TODO manage no valid command
 		}
 
 		private IEnumerator ResolveBattle() {
@@ -90,10 +90,17 @@ namespace _7DRL.Scenes.Combat {
 			yield return null;
 			CommonGameUi.dialogPanel.Show("Level up");
 
-			var optionCommands = encounter.interactionOptions.ToDictionary(t => t.inputValue, t => t);
 			InteractionOption inputInteraction = null;
-			yield return StartCoroutine(TextInputManager.ListenUntilResult(optionCommands, HandleDialogInputChanged, interaction => inputInteraction = interaction));
+			var listenInputCallbacks = new TextInputManager.ListenUntilResultCallbacks<InteractionOption> {
+				completed = t => inputInteraction = t,
+				inputChanged = HandleDialogInputChanged,
+				letterPaid = HandleLetterPaid,
+				letterReimbursed = HandleLetterReimbursed,
+				missingLetter = HandleLetterMissing
+			};
+			yield return StartCoroutine(TextInputManager.ListenUntilResult(encounter.interactionOptions, Game.instance.playerCharacter.letterReserve, listenInputCallbacks));
 			yield return StartCoroutine(ResolveLevelUp(inputInteraction));
+			Game.instance.playerCharacter.LevelUp();
 
 			CommonGameUi.dialogPanel.Hide();
 		}
@@ -132,7 +139,7 @@ namespace _7DRL.Scenes.Combat {
 			combatCharacters.Values.ForEach(t => Destroy(t.gameObject));
 			combatCharacters.Clear();
 			combatCharacters.Add(Game.instance.playerCharacter, _combatScene.player);
-			_combatScene.player.Init(0, false);
+			_combatScene.player.Init(0, false, false);
 			_combatScene.RelocatePlayerAndFoes();
 			var farthestFoePosition = Vector3.zero;
 			for (var foeIndex = 0; foeIndex < encounter.foes.Length; foeIndex++) {
@@ -140,7 +147,7 @@ namespace _7DRL.Scenes.Combat {
 				var foePosition = _combatScene.GetFoePosition(foeIndex);
 				var foeCharacter = Instantiate(_combatCharacterPrefab, Vector3.zero, Quaternion.identity, foePosition);
 				foeCharacter.transform.localPosition = Vector3.zero;
-				foeCharacter.Init(encounter.foes[foeIndex].spriteSeed, true);
+				foeCharacter.Init(encounter.foes[foeIndex].spriteSeed, true, encounter.foes[foeIndex].dead);
 				combatCharacters.Add(encounter.foes[foeIndex], foeCharacter);
 				farthestFoePosition = foePosition.position;
 			}
@@ -154,7 +161,11 @@ namespace _7DRL.Scenes.Combat {
 		}
 
 		private IEnumerator DoFoesTurn() {
-			foreach (var foe in encounter.foes.Where(t => !t.dead)) {
+			foreach (var foe in encounter.foes) {
+				if (foe.dead) {
+					combatCharacters[foe].SetDead(true);
+					continue;
+				}
 				yield return StartCoroutine(_ui.cursor.Change(Colors.Of("combat.cursor.foe"), CameraUtils.main.WorldToScreenPoint(combatCharacters[foe].transform.position)));
 				yield return new WaitForSeconds(.5f);
 				foe.ProgressCurrentCommand();
@@ -169,18 +180,23 @@ namespace _7DRL.Scenes.Combat {
 		}
 
 		private IEnumerator DoPlayerTurn() {
-			var commands = Game.instance.playerCharacter.knownCommands.Where(t => t.type.IsUsable(CommandType.Location.Combat)).ToDictionary(t => t.inputName, t => t);
+			var commands = Game.instance.playerCharacter.knownCommands.Where(t => t.type.IsUsable(CommandType.Location.Combat)).ToArray();
 			Command command = null;
 			Game.instance.playerCharacter.SetCurrentCommand(string.Empty, CommandType.Location.Combat);
 			StartCoroutine(_ui.cursor.Change(Colors.Of("combat.cursor.player"), CameraUtils.main.WorldToScreenPoint(_combatScene.playerPosition.position)));
-			yield return StartCoroutine(TextInputManager.ListenUntilResult(commands, OnPlayerInputChanged, t => command = t));
+			var listenInputCallbacks = new TextInputManager.ListenUntilResultCallbacks<Command>() {
+				completed = t => command = t,
+				inputChanged = (input, recognizedCommand) => Game.instance.playerCharacter.SetCurrentCommand(input, CommandType.Location.Combat),
+				letterPaid = HandleLetterPaid,
+				letterReimbursed = HandleLetterReimbursed,
+				missingLetter = HandleLetterMissing
+			};
+			yield return StartCoroutine(TextInputManager.ListenUntilResult(commands, Game.instance.playerCharacter.letterReserve, listenInputCallbacks));
 			yield return new WaitForSeconds(.5f);
 			var target = encounter.foes.First(t => !t.dead);
 			yield return StartCoroutine(ResolveCommand(Game.instance.playerCharacter, target, command));
 			Game.instance.playerCharacter.SetCurrentCommand(string.Empty, CommandType.Location.Combat);
 		}
-
-		private static void OnPlayerInputChanged(string input, Command preferredCommand) => Game.instance.playerCharacter.SetCurrentCommand(input, CommandType.Location.Combat);
 
 		private IEnumerator ResolveCommand(CharacterBase source, CharacterBase target, Command command) {
 			yield return StartCoroutine(GetCommandAction(command)(source, target, command));
@@ -219,7 +235,7 @@ namespace _7DRL.Scenes.Combat {
 						var targetPosition = CameraUtils.main.WorldToScreenPoint(combatCharacters[target].transform.position);
 						yield return StartCoroutine(EarnLetters(target.name, targetPosition));
 						foreach (var targetKnownCommand in target.knownCommands) {
-							yield return StartCoroutine(EarnLetters(targetKnownCommand.inputName, targetPosition));
+							yield return StartCoroutine(EarnLetters(targetKnownCommand.textInput, targetPosition));
 						}
 					}
 				}

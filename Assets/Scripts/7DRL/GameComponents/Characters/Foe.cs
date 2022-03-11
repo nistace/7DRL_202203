@@ -18,8 +18,8 @@ namespace _7DRL.GameComponents.Characters {
 
 		public override string  name                         => _type.name;
 		public          byte    spriteSeed                   { get; }
-		public override string  currentCommandLetters        => currentCommand.inputName.Substring(0, _currentCommandProgress);
-		public override string  currentCommandMissingLetters => currentCommand.inputName.Substring(_currentCommandProgress);
+		public override string  currentCommandLetters        => currentCommand.textInput.Substring(0, _currentCommandProgress);
+		public override string  currentCommandMissingLetters => currentCommand.textInput.Substring(_currentCommandProgress);
 		public          Command currentCommand               => _knownCommands[_currentCommandIndex];
 
 		public Foe(FoeType type, int level, int maxHealth, float powerCoefficient, IEnumerable<Command> knownCommands) : base(level, maxHealth, knownCommands.ToList().Shuffled()) {
@@ -30,11 +30,11 @@ namespace _7DRL.GameComponents.Characters {
 		}
 
 		public void ProgressCurrentCommand() {
-			_currentCommandProgress = Mathf.Min(_currentCommandProgress + _level, currentCommand.inputName.Length);
+			_currentCommandProgress = Mathf.Min(_currentCommandProgress + _level, currentCommand.textInput.Length);
 			onCurrentCommandChanged.Invoke();
 		}
 
-		public bool IsCurrentCommandReady() => _currentCommandProgress == currentCommand.inputName.Length;
+		public bool IsCurrentCommandReady() => _currentCommandProgress == currentCommand.textInput.Length;
 
 		public void PrepareNextCommand() {
 			_currentCommandIndex = (_currentCommandIndex + 1) % _knownCommands.Count;
@@ -42,7 +42,7 @@ namespace _7DRL.GameComponents.Characters {
 			onCurrentCommandChanged.Invoke();
 		}
 
-		public override int GetCommandPower(Command command) => command.type.FixPower(Mathf.RoundToInt(_powerCoefficient * TextUtils.GetInputValue(command.inputName, letterPowers)));
+		public override int GetCommandPower(Command command) => command.type.FixPower(Mathf.RoundToInt(_powerCoefficient * TextUtils.GetInputValue(command.textInput, letterPowers)));
 
 		public override bool TryGetCurrentCommand(out Command command) {
 			command = currentCommand;

@@ -44,7 +44,7 @@ namespace _7DRL.Ui {
 		}
 
 		public void Refresh() {
-			_commandText.text = command.inputName;
+			_commandText.text = command.textInput;
 			_commandText.color = textColor;
 			if (Game.instance == null) return;
 			_amount = Game.instance.playerCharacter.CountOpportunitiesToPlay(command);

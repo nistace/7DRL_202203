@@ -21,7 +21,7 @@ namespace _7DRL.Scenes.Combat {
 
 		public Transform headTransform => _headTransform;
 
-		public void Init(byte spriteSeed, bool foe) {
+		public void Init(byte spriteSeed, bool foe, bool dead) {
 			if (_animator && _animator.isActiveAndEnabled) {
 				_animator.SetTrigger(restartAnimParam);
 				_animator.ResetTrigger(attackAnimParam);
@@ -31,7 +31,7 @@ namespace _7DRL.Scenes.Combat {
 				_animator.ResetTrigger(defenseAnimParam);
 				_animator.ResetTrigger(escapeSuccessAnimParam);
 				_animator.ResetTrigger(escapeFailAnimParam);
-				_animator.SetBool(deadAnimParam, false);
+				_animator.SetBool(deadAnimParam, dead);
 			}
 			_spriteRenderer.color = Color.white;
 			_spriteRenderer.flipX = foe;

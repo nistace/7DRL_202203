@@ -36,7 +36,7 @@ namespace _7DRL.Games {
 				playerInitialLetters[letterPower.Key] += Mathf.CeilToInt((float)RlConstants.Player.initialLettersPerPower / letterPower.Value);
 			}
 			foreach (var knownCommand in playerInitialCommands) {
-				foreach (var letter in knownCommand.inputName) {
+				foreach (var letter in knownCommand.textInput) {
 					playerInitialLetters[letter] += Mathf.RoundToInt(RlConstants.Player.initialLettersPerKnownCommands * knownCommand.type.initialLetterAmountCoefficient);
 				}
 			}
@@ -44,7 +44,7 @@ namespace _7DRL.Games {
 		}
 
 		private static Dictionary<char, int> GenerateDefaultLetterPowers() {
-			var allInputNames = Memory.commands.Select(t => t.inputName).ToArray();
+			var allInputNames = Memory.commands.Select(t => t.textInput).ToArray();
 			float totalLetters = allInputNames.Sum(t => t.Length);
 			var lettersPresence = TextUtils.allLetters.ToDictionary(c => c, c => allInputNames.Sum(t => t.Count(u => u == c)) / totalLetters);
 			var letterRawPower = lettersPresence.ToDictionary(t => t.Key, t => 1f / t.Value);
@@ -72,23 +72,30 @@ namespace _7DRL.Games {
 			(InteractionOption interaction, char letter) powerInteraction = (default, default); // 1 | 2
 			var foesCommandsUnknownByPlayer = foes.SelectMany(t => t.knownCommands).Intersect(playerUnknownCommands).ToArray();
 			var options = foesCommandsUnknownByPlayer.Length == 0 ? 1 : Random.Range(0, 3);
+			var uniqueFirstLetters = new HashSet<char>();
 
 			if (options == 0 || options == 1) { // max health
-				maxHealthInteraction = Memory.interactionOptions[InteractionType.MaxHealth].Random();
+				maxHealthInteraction = GetRandomInteraction(InteractionType.MaxHealth, uniqueFirstLetters);
 			}
 			if (options == 0 || options == 2) { // skill
 				skillInteraction.skill = foesCommandsUnknownByPlayer.Random();
-				skillInteraction.interaction = new InteractionOption(Memory.interactionOptions[InteractionType.Skill].Random(), $"the {skillInteraction.skill.inputName} command");
+				skillInteraction.interaction = new InteractionOption(GetRandomInteraction(InteractionType.Skill, uniqueFirstLetters), $"the {skillInteraction.skill.textInput} command.");
 				playerUnknownCommands.Remove(skillInteraction.skill);
 			}
 			if (options == 1 || options == 2) { // power
 				powerInteraction.letter = TextUtils.allLetters.Random();
-				powerInteraction.interaction = new InteractionOption(Memory.interactionOptions[InteractionType.Power].Random(), $"the letter \"{powerInteraction.letter}\" to double its power.");
+				powerInteraction.interaction = new InteractionOption(GetRandomInteraction(InteractionType.Power, uniqueFirstLetters), $"the letter \"{powerInteraction.letter}\" to double its power.");
 			}
 
-			var skipInteraction = Memory.interactionOptions[InteractionType.Skip].Random();
+			var skipInteraction = GetRandomInteraction(InteractionType.Skip, uniqueFirstLetters);
 
 			return new Encounter(level, position, foes, maxHealthInteraction, skillInteraction, powerInteraction, skipInteraction);
+		}
+
+		private static InteractionOption GetRandomInteraction(InteractionType type, HashSet<char> forbiddenLetters) {
+			var option = Memory.interactionOptions[type].Where(t => !forbiddenLetters.Contains(t.inputValue[0])).Random();
+			forbiddenLetters.Remove(option.inputValue[0]);
+			return option;
 		}
 
 		private static Foe GenerateFoe(int level, IReadOnlyDictionary<char, int> letterPowers) {
@@ -104,7 +111,7 @@ namespace _7DRL.Games {
 			if (level >= 7) commands.Add(Memory.commandsPerType[Memory.CommandTypes.defense].Except(commands).Random());
 			if (level >= 8) commands.Add(Memory.commandsPerType[Memory.CommandTypes.attack].Except(commands).Random());
 			if (level >= 9) commands.Add(Memory.commandsPerType[Memory.CommandTypes.defense].Except(commands).Random());
-			var score = TextUtils.GetInputValue(type.inputName, letterPowers) + commands.Sum(t => TextUtils.GetInputValue(t.inputName, letterPowers));
+			var score = TextUtils.GetInputValue(type.inputName, letterPowers) + commands.Sum(t => TextUtils.GetInputValue(t.textInput, letterPowers));
 			var health = Mathf.RoundToInt(RlConstants.Foes.maxHealthConstant + RlConstants.Foes.maxHealthCoefficient * score) * level;
 			return new Foe(type, level, health, powerCoefficient, commands);
 		}
@@ -165,22 +172,25 @@ namespace _7DRL.Games {
 		}
 
 		private static DungeonPortal GeneratePortal(Vector2Int origin, Vector2Int destination) {
-			var portalInteraction = Memory.interactionOptions[InteractionType.Portal].Random();
-			var skipInteraction = Memory.interactionOptions[InteractionType.Skip].Random();
+			var uniqueFirstLetters = new HashSet<char>();
+			var portalInteraction = GetRandomInteraction(InteractionType.Portal, uniqueFirstLetters);
+			var skipInteraction = GetRandomInteraction(InteractionType.Skip, uniqueFirstLetters);
 			return new DungeonPortal(origin, (portalInteraction, destination), skipInteraction);
 		}
 
 		private static DungeonFountainOfYouth GenerateFountainOfYouth(Vector2Int position) {
-			var fountainInteraction = Memory.interactionOptions[InteractionType.Fountain].Random();
-			var skipInteraction = Memory.interactionOptions[InteractionType.Skip].Random();
+			var uniqueFirstLetters = new HashSet<char>();
+			var fountainInteraction = GetRandomInteraction(InteractionType.Fountain, uniqueFirstLetters);
+			var skipInteraction = GetRandomInteraction(InteractionType.Skip, uniqueFirstLetters);
 			return new DungeonFountainOfYouth(position, fountainInteraction, skipInteraction);
 		}
 
 		private static DungeonChest GenerateChest(IReadOnlyDictionary<char, int> letterPowers, Vector2Int position) {
-			var chestInteraction = Memory.interactionOptions[InteractionType.Chest].Random();
+			var uniqueFirstLetters = new HashSet<char>();
+			var chestInteraction = GetRandomInteraction(InteractionType.Chest, uniqueFirstLetters);
 			var score = RlConstants.Dungeon.chestBountyScore * Vector2.Distance(position, RlConstants.Dungeon.playerStartPosition) + TextUtils.GetInputValue(chestInteraction.inputValue, letterPowers);
 			var bounty = Memory.chestContentGenerator.Generate(Mathf.RoundToInt(score), letterPowers);
-			var skipInteraction = Memory.interactionOptions[InteractionType.Skip].Random();
+			var skipInteraction = GetRandomInteraction(InteractionType.Skip, uniqueFirstLetters);
 			return new DungeonChest(position, (chestInteraction, bounty), skipInteraction);
 		}
 
@@ -189,9 +199,10 @@ namespace _7DRL.Games {
 			(InteractionOption interaction, Command skill) skillInteraction = (default, default); // 0 | 2
 			(InteractionOption interaction, char letter) powerInteraction = (default, default); // 1 | 2
 			var options = playerUnknownCommands.Count == 0 ? 1 : Random.Range(0, 3);
+			var uniqueFirstLetters = new HashSet<char>();
 
 			if (options == 0 || options == 1) { // book
-				var action = Memory.interactionOptions[InteractionType.Book].Random();
+				var action = GetRandomInteraction(InteractionType.Book, uniqueFirstLetters);
 				var score = Mathf.RoundToInt(RlConstants.Dungeon.bookNameScore * Vector2.Distance(position, RlConstants.Dungeon.playerStartPosition))
 								+ TextUtils.GetInputValue(action.inputValue, letterPowers);
 				readInteraction.bookName = Memory.bookNameGenerator.Generate(score, letterPowers);
@@ -199,16 +210,16 @@ namespace _7DRL.Games {
 			}
 			if (options == 0 || options == 2) { // skill
 				var score = Mathf.RoundToInt(RlConstants.Dungeon.skillCommandScore * Vector2.Distance(position, RlConstants.Dungeon.playerStartPosition));
-				skillInteraction.skill = playerUnknownCommands.GetWithClosestScore(t => TextUtils.GetInputValue(t.inputName, letterPowers), score);
-				skillInteraction.interaction = new InteractionOption(Memory.interactionOptions[InteractionType.Skill].Random(), $"the {skillInteraction.skill.inputName} command");
+				skillInteraction.skill = playerUnknownCommands.GetWithClosestScore(t => TextUtils.GetInputValue(t.textInput, letterPowers), score);
+				skillInteraction.interaction = new InteractionOption(GetRandomInteraction(InteractionType.Skill, uniqueFirstLetters), $"the {skillInteraction.skill.textInput} command");
 				playerUnknownCommands.Remove(skillInteraction.skill);
 			}
 			if (options == 1 || options == 2) { // power
 				powerInteraction.letter = TextUtils.allLetters.Random();
-				powerInteraction.interaction = new InteractionOption(Memory.interactionOptions[InteractionType.Power].Random(), $"the letter \"{powerInteraction.letter}\" to double its power.");
+				powerInteraction.interaction = new InteractionOption(GetRandomInteraction(InteractionType.Power, uniqueFirstLetters), $"the letter \"{powerInteraction.letter}\" to double its power.");
 			}
 
-			var skipInteraction = Memory.interactionOptions[InteractionType.Skip].Random();
+			var skipInteraction = GetRandomInteraction(InteractionType.Skip, uniqueFirstLetters);
 			return new DungeonStoneTableOfKnowledge(position, readInteraction, skillInteraction, powerInteraction, skipInteraction);
 		}
 

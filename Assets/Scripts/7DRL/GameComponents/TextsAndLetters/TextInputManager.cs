@@ -15,13 +15,12 @@ namespace _7DRL.GameComponents.TextAndLetters {
 			ClearInput();
 		}
 
-		public static  string currentInput { get; private set; }
+		private static string currentInput { get; set; }
 		private static bool   listening    { get; set; }
 
-		public static void StartListening() => instance.StartCoroutine(ListenInput());
-
-		public static void StopListening() => listening = false;
-		public static void ClearInput() => currentInput = string.Empty;
+		private static void StartListening() => instance.StartCoroutine(ListenInput());
+		private static void StopListening() => listening = false;
+		private static void ClearInput() => currentInput = string.Empty;
 
 		private static IEnumerator ListenInput() {
 			listening = true;
@@ -36,17 +35,41 @@ namespace _7DRL.GameComponents.TextAndLetters {
 			}
 		}
 
-		public static IEnumerator ListenUntilResult<E>(IReadOnlyDictionary<string, E> options, Action<string, E> inputChangedCallback, Action<E> completedCallback) {
+		public static IEnumerator ListenUntilResult<E>(IReadOnlyCollection<E> options, LetterReserve payer, ListenUntilResultCallbacks<E> callbacks = null) where E : ITextInputResult {
 			ClearInput();
 			StartListening();
 			var lastValidInput = string.Empty;
-			var preferredOption = string.Empty;
-			while (string.IsNullOrEmpty(lastValidInput) || lastValidInput != preferredOption) {
+			E lastValidOption = default;
+			while (string.IsNullOrEmpty(lastValidInput) || lastValidInput != lastValidOption?.textInput) {
 				if (currentInput != lastValidInput) {
-					if (options.Keys.TryFirst(t => t.StartsWith(currentInput), out preferredOption)) {
+					var newInputIsValid = false;
+					E newRecognizedOption;
+
+					if (lastValidInput.Length > currentInput.Length) {
+						if (!lastValidOption.isFreeInput) {
+							payer.Add(lastValidInput.Substring(currentInput.Length));
+							lastValidInput.Substring(currentInput.Length).ForEach(c => callbacks?.letterReimbursed?.Invoke(c));
+						}
+						newInputIsValid = true;
+						newRecognizedOption = lastValidOption;
+					}
+					else if (options.TryFirst(t => t.textInput.StartsWith(currentInput), out newRecognizedOption)) {
+						if (newRecognizedOption.isFreeInput) {
+							newInputIsValid = true;
+						}
+						else if (payer.TryRemove(currentInput.Substring(lastValidInput.Length))) {
+							newInputIsValid = true;
+							currentInput.Substring(lastValidInput.Length).ForEach(c => callbacks?.letterPaid?.Invoke(c));
+						}
+						else {
+							currentInput.Substring(lastValidInput.Length).ForEach(c => callbacks?.missingLetter?.Invoke(c));
+						}
+					}
+					if (newInputIsValid) {
 						lastValidInput = currentInput;
-						inputChangedCallback?.Invoke(lastValidInput, options[preferredOption]);
+						lastValidOption = newRecognizedOption;
 						AudioManager.Sfx.PlayRandom("input.build");
+						callbacks?.inputChanged?.Invoke(lastValidInput, lastValidOption);
 					}
 					else {
 						currentInput = lastValidInput;
@@ -57,7 +80,15 @@ namespace _7DRL.GameComponents.TextAndLetters {
 			}
 			StopListening();
 			AudioManager.Sfx.PlayRandom("input.complete");
-			completedCallback?.Invoke(options[preferredOption]);
+			callbacks?.completed?.Invoke(lastValidOption);
+		}
+
+		public class ListenUntilResultCallbacks<E> {
+			public Action<string, E> inputChanged     { get; set; }
+			public Action<E>         completed        { get; set; }
+			public Action<char>      letterPaid       { get; set; }
+			public Action<char>      letterReimbursed { get; set; }
+			public Action<char>      missingLetter    { get; set; }
 		}
 	}
 }

@@ -34,13 +34,13 @@ namespace _7DRL.GameComponents.Characters {
 
 		public Sprite tokenSprite => Sprites.Of($"token.foe.{level}");
 
-		public InteractionOption              maxHealthInteraction    { get; }
-		public InteractionOption              skillInteraction        { get; }
-		public Command                        skillInteractionCommand { get; }
-		public InteractionOption              powerInteraction        { get; }
-		public char                           powerInteractionLetter  { get; }
-		public InteractionOption              skipInteraction         { get; }
-		public IEnumerable<InteractionOption> interactionOptions      { get; }
+		public InteractionOption                      maxHealthInteraction    { get; }
+		public InteractionOption                      skillInteraction        { get; }
+		public Command                                skillInteractionCommand { get; }
+		public InteractionOption                      powerInteraction        { get; }
+		public char                                   powerInteractionLetter  { get; }
+		public InteractionOption                      skipInteraction         { get; }
+		public IReadOnlyCollection<InteractionOption> interactionOptions      { get; }
 
 		public Encounter(Level level, Vector2Int dungeonPosition, IEnumerable<Foe> foes, InteractionOption maxHealthInteraction, (InteractionOption, Command ) skillInteraction,
 			(InteractionOption, char) powerInteraction, InteractionOption skipInteraction) {

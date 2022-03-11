@@ -32,6 +32,7 @@ namespace _7DRL.GameComponents.Characters {
 			set => _dungeonPosition = value;
 		}
 
+
 		public PlayerCharacter(IEnumerable<int> defaultLetterPowers, IReadOnlyDictionary<char, int> playerInitialLetters, IEnumerable<Command> playerInitialCommands) : base(1,
 			TextUtils.GetValueOfRaw(RlConstants.Player.name, playerInitialLetters), playerInitialCommands) {
 			_letterPowers = new List<int>(defaultLetterPowers);
@@ -54,26 +55,26 @@ namespace _7DRL.GameComponents.Characters {
 
 		public void SetCurrentCommand(string command, CommandType.Location location) {
 			_currentCommandLetters = command;
-			_advisedCurrentCommand = !string.IsNullOrEmpty(command) && _knownCommands.TryFirst(t => t.inputName.StartsWith(command) && t.type.IsUsable(location), out var advised) ? advised : null;
-			_currentCommandMissingLetters = _advisedCurrentCommand?.inputName.Substring(command.Length) ?? string.Empty;
+			_advisedCurrentCommand = !string.IsNullOrEmpty(command) && _knownCommands.TryFirst(t => t.textInput.StartsWith(command) && t.type.IsUsable(location), out var advised) ? advised : null;
+			_currentCommandMissingLetters = _advisedCurrentCommand?.textInput.Substring(command.Length) ?? string.Empty;
 			onCurrentCommandChanged.Invoke();
 		}
 
 		private string GetCurrentCommandMissingLetters(string currentCommand) {
 			if (string.IsNullOrEmpty(currentCommand)) return string.Empty;
-			if (_advisedCurrentCommand != null) return _advisedCurrentCommand.inputName.Substring(currentCommand.Length);
+			if (_advisedCurrentCommand != null) return _advisedCurrentCommand.textInput.Substring(currentCommand.Length);
 			return string.Empty;
 		}
 
-		public override int GetCommandPower(Command command) => command.type.FixPower(TextUtils.GetInputValue(command.inputName, _letterPowers));
+		public override int GetCommandPower(Command command) => command.type.FixPower(TextUtils.GetInputValue(command.textInput, _letterPowers));
 		public override bool TryGetCurrentCommand(out Command command) => (command = advisedCurrentCommand) != null;
 
-		public bool TryGetCurrentCommandIfComplete(out Command command) => TryGetCurrentCommand(out command) && command.inputName == _currentCommandLetters;
+		public bool TryGetCurrentCommandIfComplete(out Command command) => TryGetCurrentCommand(out command) && command.textInput == _currentCommandLetters;
 
 		public int CountOpportunitiesToPlay(Command command) {
 			var count = int.MaxValue;
 			for (var c = 'A'; c <= 'Z'; ++c) {
-				var charCount = command.inputName.Count(t => t == c);
+				var charCount = command.textInput.Count(t => t == c);
 				if (charCount > 0) {
 					count = Mathf.Min(count, letterReserve[c] / charCount);
 				}
@@ -81,7 +82,7 @@ namespace _7DRL.GameComponents.Characters {
 			return count;
 		}
 
-
-		public void IncreaseMaxHealth() => _maxHealth  += Mathf.RoundToInt(.1f * _maxHealth);
+		public void IncreaseMaxHealth() => _maxHealth += Mathf.RoundToInt(.1f * _maxHealth);
+		public void LevelUp() => _level++;
 	}
 }

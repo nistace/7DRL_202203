@@ -12,12 +12,14 @@ namespace _7DRL.Scenes.Map {
 		[SerializeField] protected TMP_Text         _healthText;
 		[SerializeField] protected CommandTrackerUi _commandTracker;
 
-		private PlayerCharacter  playerCharacter { get; set; }
-		public  CommandTrackerUi commandTracker  => _commandTracker;
+		private PlayerCharacter  playerCharacter         { get; set; }
+		public  CommandTrackerUi commandTracker          => _commandTracker;
+		public  Transform        commandTrackerTransform => _commandTracker.transform;
 
 		public void Set(PlayerCharacter playerCharacter) {
 			this.playerCharacter = playerCharacter;
 			_commandTracker.Set(playerCharacter);
+			playerCharacter.onNameChanged.AddListenerOnce(Refresh);
 			playerCharacter.onHealthChanged.AddListenerOnce(Refresh);
 			Refresh();
 		}

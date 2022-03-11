@@ -35,6 +35,7 @@ namespace _7DRL.GameComponents.Characters {
 		public UnityEvent onDodgeChanceChanged    { get; } = new UnityEvent();
 		public UnityEvent onEscapeChanceChanged   { get; } = new UnityEvent();
 		public UnityEvent onCurrentCommandChanged { get; } = new UnityEvent();
+		public UnityEvent onNameChanged           { get; } = new UnityEvent();
 
 		protected CharacterBase(int level, int maxHealth, IEnumerable<Command> knownCommands) {
 			_level = level;

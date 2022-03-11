@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 using Utils.Extensions;
@@ -33,6 +34,14 @@ namespace _7DRL.GameComponents.TextAndLetters {
 				_reserve[i] += other._reserve[i];
 			}
 			onReserveChanged.Invoke();
+		}
+
+		public void Add(string word) => word.ForEach(t => Add(t));
+
+		public bool TryRemove(string word) {
+			if (!TextUtils.allLetters.All(c => this[c] >= word.Count(t => t == c))) return false;
+			word.ForEach(t => Remove(t));
+			return true;
 		}
 	}
 }

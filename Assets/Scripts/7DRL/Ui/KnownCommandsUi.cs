@@ -11,7 +11,8 @@ namespace _7DRL.Ui {
 		[SerializeField] protected Transform           _container;
 		[SerializeField] protected KnownCommandsItemUi _itemPrefab;
 
-		private List<KnownCommandsItemUi> items { get; } = new List<KnownCommandsItemUi>();
+		private List<KnownCommandsItemUi> items            { get; } = new List<KnownCommandsItemUi>();
+		private CommandType.Location      commandsValidity { get; set; }
 
 		private void OnEnable() => RefreshItems();
 
@@ -28,13 +29,19 @@ namespace _7DRL.Ui {
 			items.Clear();
 			_container.ClearChildren();
 			if (Game.instance == null) return;
-			foreach (var command in Game.instance.playerCharacter.knownCommands.OrderBy(t => t.order).ThenBy(t => t.inputName)) {
+			foreach (var command in Game.instance.playerCharacter.knownCommands.OrderBy(t => t.order).ThenBy(t => t.textInput)) {
 				var newInstance = Instantiate(_itemPrefab, _container);
 				newInstance.Set(command);
 				items.Add(newInstance);
 			}
+			RefreshValidCommands();
 		}
 
-		public void SetValidCommands(CommandType.Location location) => items.ForEach(t => t.valid = t.command.type.IsUsable(location));
+		public void SetValidCommands(CommandType.Location location) {
+			commandsValidity = location;
+			RefreshValidCommands();
+		}
+
+		private void RefreshValidCommands() => items.ForEach(t => t.valid = t.command.type.IsUsable(commandsValidity));
 	}
 }

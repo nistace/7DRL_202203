@@ -124,6 +124,8 @@ namespace _7DRL.Scenes.Map {
 				yield return StartCoroutine(DoCurrentTurnStep());
 				Game.instance.NextTurnStep();
 			}
+
+			//TODO manage no valid command
 		}
 
 		private IEnumerator DoCurrentTurnStep() {
@@ -144,16 +146,24 @@ namespace _7DRL.Scenes.Map {
 		}
 
 		private IEnumerator DoPlayerTurnStep() {
-			var commands = Game.instance.playerCharacter.knownCommands.Where(t => t.type.IsUsable(CommandType.Location.Map) && CanExecute(t)).ToDictionary(t => t.inputName, t => t);
+			var commands = Game.instance.playerCharacter.knownCommands.Where(t => t.type.IsUsable(CommandType.Location.Map) && CanExecute(t)).ToArray();
 			Game.instance.playerCharacter.SetCurrentCommand(string.Empty, CommandType.Location.Map);
+
 			Command command = null;
-			yield return StartCoroutine(TextInputManager.ListenUntilResult(commands, OnPlayerInputChanged, t => command = t));
+			var listenInputCallbacks = new TextInputManager.ListenUntilResultCallbacks<Command> {
+				completed = t => command = t,
+				inputChanged = (input, recognizedCommand) => Game.instance.playerCharacter.SetCurrentCommand(input, CommandType.Location.Map),
+				letterPaid = HandleLetterPaid,
+				letterReimbursed = HandleLetterReimbursed,
+				missingLetter = HandleLetterMissing
+			};
+
+			yield return StartCoroutine(TextInputManager.ListenUntilResult(commands, Game.instance.playerCharacter.letterReserve, listenInputCallbacks));
 			yield return new WaitForSeconds(1);
 			yield return StartCoroutine(ResolvePlayerCommand(command));
+
 			Game.instance.playerCharacter.SetCurrentCommand(string.Empty, CommandType.Location.Map);
 		}
-
-		private static void OnPlayerInputChanged(string input, Command preferredCommand) => Game.instance.playerCharacter.SetCurrentCommand(input, CommandType.Location.Map);
 
 		private static bool CanExecute(Command command) => CanExecute(command.type);
 
@@ -282,9 +292,15 @@ namespace _7DRL.Scenes.Map {
 				yield return null;
 				CommonGameUi.dialogPanel.Show(misc.interactionName);
 
-				var optionCommands = misc.interactionOptions.ToDictionary(t => t.inputValue, t => t);
 				InteractionOption inputInteraction = null;
-				yield return StartCoroutine(TextInputManager.ListenUntilResult(optionCommands, HandleDialogInputChanged, interaction => inputInteraction = interaction));
+				var listenInputCallbacks = new TextInputManager.ListenUntilResultCallbacks<InteractionOption> {
+					completed = t => inputInteraction = t,
+					inputChanged = HandleDialogInputChanged,
+					letterPaid = HandleLetterPaid,
+					letterReimbursed = HandleLetterReimbursed,
+					missingLetter = HandleLetterMissing
+				};
+				yield return StartCoroutine(TextInputManager.ListenUntilResult(misc.interactionOptions, Game.instance.playerCharacter.letterReserve, listenInputCallbacks));
 				yield return StartCoroutine(ResolveMisc(misc, inputInteraction));
 
 				CommonGameUi.dialogPanel.Hide();

@@ -21,9 +21,12 @@ namespace _7DRL.Scenes.Combat.Ui {
 
 		private CharacterBase character { get; set; }
 
+		public Transform commandTrackerTransform => _commandTracker.transform;
+
 		public void Set(CharacterBase character) {
 			this.character = character;
-			_characterNameText.text = character.completeName;
+			RefreshName();
+			character.onNameChanged.AddListenerOnce(RefreshName);
 			character.onHealthChanged.AddListenerOnce(RefreshHealthAndArmor);
 			character.onHealthChanged.AddListenerOnce(RefreshDodgeChance);
 			character.onHealthChanged.AddListenerOnce(RefreshEscapeChance);
@@ -35,6 +38,8 @@ namespace _7DRL.Scenes.Combat.Ui {
 			RefreshDodgeChance();
 			RefreshEscapeChance();
 		}
+
+		private void RefreshName() => _characterNameText.text = character.completeName;
 
 		private void RefreshHealthAndArmor() {
 			var total = (float)Mathf.Max(character.health + character.armor, character.maxHealth);

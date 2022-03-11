@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _id:
     _value: 5
-  _descriptionPattern: Adds <b>[POW]%</b> chances, then try to run away from a battle.
+  _descriptionPattern: Adds <b>[POW]%</b> chances, then try to run away.
   _powerMultiplier: 0.4
   _minPower: 1
   _maxPower: 100

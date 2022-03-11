@@ -32,7 +32,7 @@ namespace _7DRL.Scenes.Map {
 		}
 
 		private void Refresh(TMP_Text text, CommandType type) {
-			text.text = character.knownCommands.Where(t => t.type == type).OrderBy(t => t.order).ThenBy(t => t.name).Select(t => t.inputName).Join("<br>");
+			text.text = character.knownCommands.Where(t => t.type == type).OrderBy(t => t.order).ThenBy(t => t.name).Select(t => t.textInput).Join("<br>");
 		}
 
 		public void SetDirectionEnabled(DungeonMap.Direction direction, bool enabled) {

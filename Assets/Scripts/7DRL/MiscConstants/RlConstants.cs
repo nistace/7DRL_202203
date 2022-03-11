@@ -19,7 +19,7 @@ namespace _7DRL.MiscConstants {
 		public static class Player {
 			public const string name                           = "Typist";
 			public const float  maxHealthCoefficient           = 1f;
-			public const int    initialLettersPerPower         = 100;
+			public const int    initialLettersPerPower         = 10;
 			public const int    initialLettersPerKnownCommands = 5;
 		}
 

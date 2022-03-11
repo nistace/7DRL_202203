@@ -14,9 +14,9 @@ namespace _7DRL.GameComponents.Dungeons.Misc {
 
 		Type type { get; }
 
-		IEnumerable<InteractionOption> interactionOptions { get; }
-		string                         interactionText    { get; }
-		string                         interactionName    { get; }
-		Sprite                         tokenSprite        { get; }
+		IReadOnlyCollection<InteractionOption> interactionOptions { get; }
+		string                                 interactionText    { get; }
+		string                                 interactionName    { get; }
+		Sprite                                 tokenSprite        { get; }
 	}
 }

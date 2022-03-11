@@ -3,7 +3,8 @@ chest,1,open,the chest and get what's inside.
 chest,1,unlock,the chest and keep what's inside for yourself.
 chest,1,unlatch,the chest and get what's inside.
 chest,1,pick,the chest and keep what's inside for yourself.
-skip,0,leave,it alone and continue your journey.
+skip,0,leave,it be and continue your journey.
+skip,0,refrain,and carry on with your journey.
 skip,0,continue,your journey without caring.
 skip,0,pursue,your journey without caring.
 book,1,read,

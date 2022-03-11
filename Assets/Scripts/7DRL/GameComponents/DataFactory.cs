@@ -33,8 +33,8 @@ namespace _7DRL.Data {
 
 		private static void CheckConflicts(List<Command> allCommands) {
 			foreach (var first in allCommands)
-			foreach (var second in allCommands.Where(second => first != second && (first.type.usedInLocations & second.type.usedInLocations) > 0 && first.inputName.StartsWith(second.inputName))) {
-				Debug.LogError($"CONFLICT: between {first.inputName} and {second.inputName}");
+			foreach (var second in allCommands.Where(second => first != second && (first.type.usedInLocations & second.type.usedInLocations) > 0 && first.textInput.StartsWith(second.textInput))) {
+				Debug.LogError($"CONFLICT: between {first.textInput} and {second.textInput}");
 			}
 		}
 

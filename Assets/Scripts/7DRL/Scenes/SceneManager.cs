@@ -35,6 +35,7 @@ namespace _7DRL.Scenes {
 
 		private static void HandleEarnedLetterArrived(char letter) {
 			AudioManager.Sfx.Play("bonus.letter");
+			CommonGameUi.playerLetterReserve.FlashLine(letter, LetterReserveUi.FlashType.Add);
 			Game.instance.playerCharacter.letterReserve.Add(letter);
 		}
 
@@ -43,7 +44,7 @@ namespace _7DRL.Scenes {
 		protected IEnumerator ResolveRestCommand(Command command, Vector2 lettersOrigin) {
 			yield return new WaitForSeconds(.5f);
 			Coroutine lastCoroutine = null;
-			var possibleLetters = TextUtils.allLetters.Except(command.inputName).ToArray();
+			var possibleLetters = TextUtils.allLetters.Except(command.textInput).ToArray();
 			foreach (var letter in Game.instance.playerCharacter.GetCommandPower(command).CreateArray(t => possibleLetters.Random())) {
 				AudioManager.Sfx.Play("bonus.letter");
 				lastCoroutine = StartCoroutine(EarnLetter(letter, lettersOrigin));
@@ -53,6 +54,9 @@ namespace _7DRL.Scenes {
 		}
 
 		protected static void HandleDialogInputChanged(string input, InteractionOption preferred) => CommonGameUi.dialogPanel.SetCommandProgress(preferred.inputValue, input.Length);
+		protected static void HandleLetterPaid(char letter) => CommonGameUi.playerLetterReserve.FlashLine(letter, LetterReserveUi.FlashType.Remove);
+		protected static void HandleLetterReimbursed(char letter) => CommonGameUi.playerLetterReserve.FlashLine(letter, LetterReserveUi.FlashType.Add);
+		protected static void HandleLetterMissing(char letter) => CommonGameUi.playerLetterReserve.FlashLine(letter, LetterReserveUi.FlashType.Missing);
 
 		protected static IEnumerator ResolveSkillInteraction(Command command) {
 			yield return new WaitForSeconds(.5f);

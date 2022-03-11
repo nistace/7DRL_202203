@@ -42,4 +42,11 @@ public class DialogPanelUi : MonoBehaviour {
 	public void Hide() {
 		_panel.SetActive(false);
 	}
+
+	public bool TryGetCommandTransform(string command, out Transform commandTransform) {
+		commandTransform = default;
+		if (!optionsPerCommand.ContainsKey(command)) return false;
+		commandTransform = optionsPerCommand[command].transform;
+		return true;
+	}
 }
