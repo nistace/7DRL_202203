@@ -7,20 +7,22 @@ using _7DRL.MiscConstants;
 using _7DRL.Scenes;
 using _7DRL.Scenes.Combat;
 using _7DRL.Scenes.GameOver;
+using _7DRL.Scenes.Intro;
 using _7DRL.Scenes.Map;
 using _7DRL.Ui;
 using UnityEngine;
+using Utils.Audio;
 using Utils.Extensions;
 using Utils.Libraries;
 using Utils.Loading;
 
 namespace _7DRL {
 	public class App : MonoBehaviour {
-		[SerializeField] protected Game                  _currentGame;
-		[SerializeField] protected MapSceneManager       _mapManager;
-		[SerializeField] protected CombatSceneManager    _combatManager;
-		[SerializeField] protected GameOverScreenManager _gameOverManager;
-		[SerializeField] protected LoadingCanvas         _loadingScreen;
+		[SerializeField] protected IntroSceneManager    _introManager;
+		[SerializeField] protected MapSceneManager      _mapManager;
+		[SerializeField] protected CombatSceneManager   _combatManager;
+		[SerializeField] protected GameOverSceneManager _gameOverManager;
+		[SerializeField] protected LoadingCanvas        _loadingScreen;
 
 		private SceneManager currentScene { get; set; }
 
@@ -34,31 +36,33 @@ namespace _7DRL {
 			GameEvents.onPlayerFledBattle.AddListenerOnce(HandlePlayerFled);
 			GameEvents.onPlayerLost.AddListenerOnce(HandlePlayerLost);
 			GameEvents.onPlayerDead.AddListenerOnce(HandlePlayerDead);
+			GameEvents.onGameOverEnded.AddListenerOnce(HandleGameOverEnded);
+			GameEvents.onNewGameIntroEnded.AddListenerOnce(HandleNewGameIntroEnded);
+			GameEvents.onQuitGame.AddListenerOnce(HandleQuitGame);
+			Inputs.controls.Main.VolumeUp.AddPerformListenerOnce(t => AudioManager.masterVolume += .1f);
+			Inputs.controls.Main.VolumeDown.AddPerformListenerOnce(t => AudioManager.masterVolume -= .1f);
+			Inputs.controls.Enable();
+
 			StartCoroutine(Init());
 		}
 
+		private void HandleQuitGame() => _loadingScreen.Show(() => {
+			if (Application.isEditor && Application.isPlaying) UnityEditor.EditorApplication.isPlaying = false;
+			else Application.Quit();
+		});
+
+		private void HandleNewGameIntroEnded() => StartCoroutine(StartNewGame());
+
 		private IEnumerator Init() {
-			// TODO show first screen.
-			// Handle starting a new game.
 			_loadingScreen.SetProgress(0);
 			Colors.LoadLibrary(Resources.LoadAll<ColorLibrary>("Libraries").FirstOrDefault());
 			AudioClips.LoadLibrary(Resources.LoadAll<AudioClipLibrary>("Libraries").FirstOrDefault());
 			Sprites.LoadLibrary(Resources.LoadAll<SpriteLibrary>("Libraries").FirstOrDefault());
-			_loadingScreen.SetProgress(.2f);
+			_loadingScreen.SetProgress(.5f);
 			yield return null;
 			yield return StartCoroutine(Memory.Load());
-			_loadingScreen.SetProgress(.5f);
-			yield return StartCoroutine(GameFactory.CreateGame(t => Game.instance = t));
-			CommonGameUi.Init(Game.instance.playerCharacter);
-			_loadingScreen.SetProgress(.8f);
-			yield return null;
-			_currentGame = Game.instance;
-			_mapManager.Init(Game.instance);
 			_loadingScreen.SetProgress(1);
-			yield return null;
-			yield return StartCoroutine(MoveToMap());
-			Inputs.controls.Enable();
-			_loadingScreen.Hide();
+			StartCoroutine(ShowIntro());
 		}
 
 		private IEnumerator MoveToMap() {
@@ -100,6 +104,33 @@ namespace _7DRL {
 			_gameOverManager.Show(type);
 			yield return new WaitForSeconds(.3f);
 			yield return StartCoroutine(_loadingScreen.DoFadeOut());
+		}
+
+		private void HandleGameOverEnded() => StartCoroutine(ShowIntro());
+
+		private IEnumerator ShowIntro() {
+			_loadingScreen.SetProgress(0);
+			yield return StartCoroutine(_loadingScreen.DoFadeIn());
+			if (currentScene) currentScene.Disable();
+			currentScene = _introManager;
+			if (currentScene) currentScene.Enable();
+			_introManager.Prepare();
+			yield return null;
+			yield return new WaitForSeconds(.3f);
+			yield return StartCoroutine(_loadingScreen.DoFadeOut());
+			yield return new WaitForSeconds(1f);
+			_introManager.StartMainMenu();
+		}
+
+		private IEnumerator StartNewGame() {
+			yield return StartCoroutine(_loadingScreen.DoFadeIn());
+			yield return StartCoroutine(GameFactory.CreateGame(t => Game.instance = t));
+			CommonGameUi.Init(Game.instance.playerCharacter);
+			yield return null;
+			_mapManager.Init(Game.instance);
+			_loadingScreen.SetProgress(1);
+			yield return null;
+			yield return StartCoroutine(MoveToMap());
 		}
 	}
 }

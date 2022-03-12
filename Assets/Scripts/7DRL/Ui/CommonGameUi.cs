@@ -37,5 +37,7 @@ namespace _7DRL.Ui {
 			playerLetterReserve.Set(player.letterReserve);
 			knownCommands.Set(player);
 		}
+
+		public static void SetPlayerLetterReserveVisible(bool visible) => playerLetterReserve.gameObject.SetActive(visible);
 	}
 }

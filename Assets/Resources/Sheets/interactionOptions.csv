@@ -16,7 +16,7 @@ skill,1,master,
 skill,1,train,
 skill,1,acquire,
 fountain,1,drink,from the fountain.
-fountain,1,absord,the liquid that flows in the fountain.
+fountain,1,absorb,the liquid that flows in the fountain.
 fountain,1,swallow,some of the liquid that flows in the fountain.
 fountain,1,consume,the precious liquid from the fountain.
 power,1,enhance,

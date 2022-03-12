@@ -36,22 +36,24 @@ namespace _7DRL.Scenes.Combat {
 			InitBattle();
 		}
 
-		public void StartBattle() => StartCoroutine(DoBattle());
+		public void StartBattle() {
+			CommonGameUi.SetToggleKnownCommandsEnabled(true);
+			CommonGameUi.SetPlayerLetterReserveVisible(true);
+			CommonGameUi.knownCommands.SetValidCommands(CommandType.Location.Combat);
+			_ui.SetVisible(true);
+			StartCoroutine(DoBattle());
+		}
 
 		private IEnumerator DoBattle() {
-			_ui.SetVisible(true);
-
 			while (!IsBattleComplete()) {
 				yield return StartCoroutine(DoCurrentTurn());
 				battleStep = (BattleStep)((int)(battleStep + 1) % EnumUtils.SizeOf<BattleStep>());
 			}
 
+			if (combatCharacters.ContainsKey(Game.instance.playerCharacter)) combatCharacters.Remove(Game.instance.playerCharacter);
 			yield return StartCoroutine(_ui.cursor.Change(Color.white.With(a: 0), _ui.cursor.position));
 			_ui.SetVisible(false);
 			yield return StartCoroutine(ResolveBattle());
-
-			//TODO manage player dead
-			//TODO manage no valid command
 		}
 
 		private IEnumerator ResolveBattle() {
@@ -64,7 +66,7 @@ namespace _7DRL.Scenes.Combat {
 				yield break;
 			}
 			if (encounter.foes.All(t => t.dead)) {
-				yield return StartCoroutine(ResolveLevelUpDialog());
+				if (encounter.level != Encounter.Level.Boss) yield return StartCoroutine(ResolveLevelUpDialog());
 				GameEvents.onEncounterDefeated.Invoke(encounter);
 				yield break;
 			}
@@ -105,6 +107,7 @@ namespace _7DRL.Scenes.Combat {
 				letterReimbursed = HandleLetterReimbursed,
 				missingLetter = HandleLetterMissing
 			};
+
 			yield return StartCoroutine(TextInputManager.ListenUntilResult(encounter.interactionOptions, Game.instance.playerCharacter.letterReserve, listenInputCallbacks));
 			yield return StartCoroutine(ResolveLevelUp(inputInteraction));
 			Game.instance.playerCharacter.LevelUp();
@@ -129,8 +132,6 @@ namespace _7DRL.Scenes.Combat {
 		}
 
 		private IEnumerator DoCurrentTurn() {
-			CommonGameUi.SetToggleKnownCommandsEnabled(true);
-			CommonGameUi.knownCommands.SetValidCommands(CommandType.Location.Combat);
 			switch (battleStep) {
 				case BattleStep.Player: return DoPlayerTurn();
 				case BattleStep.Foes: return DoFoesTurn();

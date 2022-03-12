@@ -37,6 +37,24 @@ namespace _7DRL.Input.Controls
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""VolumeUp"",
+                    ""type"": ""Button"",
+                    ""id"": ""1cc83249-466b-4298-b556-c8375e56ed8d"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""VolumeDown"",
+                    ""type"": ""Button"",
+                    ""id"": ""1e852a85-aa1c-4840-9960-aea7e0642a75"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -50,6 +68,28 @@ namespace _7DRL.Input.Controls
                     ""action"": ""KnownCommands"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""be23dd6b-5d58-43f8-a923-9e086b6abd71"",
+                    ""path"": ""<Keyboard>/upArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""VolumeUp"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""d975d380-74d6-461e-af59-9841ebb18c55"",
+                    ""path"": ""<Keyboard>/downArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""VolumeDown"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -59,6 +99,8 @@ namespace _7DRL.Input.Controls
             // Main
             m_Main = asset.FindActionMap("Main", throwIfNotFound: true);
             m_Main_KnownCommands = m_Main.FindAction("KnownCommands", throwIfNotFound: true);
+            m_Main_VolumeUp = m_Main.FindAction("VolumeUp", throwIfNotFound: true);
+            m_Main_VolumeDown = m_Main.FindAction("VolumeDown", throwIfNotFound: true);
         }
 
         public void Dispose()
@@ -119,11 +161,15 @@ namespace _7DRL.Input.Controls
         private readonly InputActionMap m_Main;
         private IMainActions m_MainActionsCallbackInterface;
         private readonly InputAction m_Main_KnownCommands;
+        private readonly InputAction m_Main_VolumeUp;
+        private readonly InputAction m_Main_VolumeDown;
         public struct MainActions
         {
             private @Controls m_Wrapper;
             public MainActions(@Controls wrapper) { m_Wrapper = wrapper; }
             public InputAction @KnownCommands => m_Wrapper.m_Main_KnownCommands;
+            public InputAction @VolumeUp => m_Wrapper.m_Main_VolumeUp;
+            public InputAction @VolumeDown => m_Wrapper.m_Main_VolumeDown;
             public InputActionMap Get() { return m_Wrapper.m_Main; }
             public void Enable() { Get().Enable(); }
             public void Disable() { Get().Disable(); }
@@ -136,6 +182,12 @@ namespace _7DRL.Input.Controls
                     @KnownCommands.started -= m_Wrapper.m_MainActionsCallbackInterface.OnKnownCommands;
                     @KnownCommands.performed -= m_Wrapper.m_MainActionsCallbackInterface.OnKnownCommands;
                     @KnownCommands.canceled -= m_Wrapper.m_MainActionsCallbackInterface.OnKnownCommands;
+                    @VolumeUp.started -= m_Wrapper.m_MainActionsCallbackInterface.OnVolumeUp;
+                    @VolumeUp.performed -= m_Wrapper.m_MainActionsCallbackInterface.OnVolumeUp;
+                    @VolumeUp.canceled -= m_Wrapper.m_MainActionsCallbackInterface.OnVolumeUp;
+                    @VolumeDown.started -= m_Wrapper.m_MainActionsCallbackInterface.OnVolumeDown;
+                    @VolumeDown.performed -= m_Wrapper.m_MainActionsCallbackInterface.OnVolumeDown;
+                    @VolumeDown.canceled -= m_Wrapper.m_MainActionsCallbackInterface.OnVolumeDown;
                 }
                 m_Wrapper.m_MainActionsCallbackInterface = instance;
                 if (instance != null)
@@ -143,6 +195,12 @@ namespace _7DRL.Input.Controls
                     @KnownCommands.started += instance.OnKnownCommands;
                     @KnownCommands.performed += instance.OnKnownCommands;
                     @KnownCommands.canceled += instance.OnKnownCommands;
+                    @VolumeUp.started += instance.OnVolumeUp;
+                    @VolumeUp.performed += instance.OnVolumeUp;
+                    @VolumeUp.canceled += instance.OnVolumeUp;
+                    @VolumeDown.started += instance.OnVolumeDown;
+                    @VolumeDown.performed += instance.OnVolumeDown;
+                    @VolumeDown.canceled += instance.OnVolumeDown;
                 }
             }
         }
@@ -150,6 +208,8 @@ namespace _7DRL.Input.Controls
         public interface IMainActions
         {
             void OnKnownCommands(InputAction.CallbackContext context);
+            void OnVolumeUp(InputAction.CallbackContext context);
+            void OnVolumeDown(InputAction.CallbackContext context);
         }
     }
 }

@@ -68,6 +68,7 @@ namespace _7DRL.Scenes.Map {
 			Game.instance.dungeonMap.RemoveEncounter(defeatedEncounter);
 			Destroy(tokens[defeatedEncounter].gameObject);
 			tokens.Remove(defeatedEncounter);
+			tokens.Remove(defeatedEncounter);
 		}
 
 		private void RefreshWindRose() {
@@ -115,11 +116,14 @@ namespace _7DRL.Scenes.Map {
 		private Vector2 GridToWorldPosition(Vector2Int position) => GridToWorldPosition(position.x, position.y);
 		private Vector2 GridToWorldPosition(int x, int y) => new Vector2(x * _pathChunkSize.x, y * _pathChunkSize.y);
 
-		public void Continue() => StartCoroutine(DoContinue());
+		public void Continue() {
+			CommonGameUi.SetToggleKnownCommandsEnabled(true);
+			CommonGameUi.SetPlayerLetterReserveVisible(true);
+			CommonGameUi.knownCommands.SetValidCommands(CommandType.Location.Map);
+			StartCoroutine(DoContinue());
+		}
 
 		private IEnumerator DoContinue() {
-			CommonGameUi.SetToggleKnownCommandsEnabled(true);
-			CommonGameUi.knownCommands.SetValidCommands(CommandType.Location.Map);
 			while (!TryInterruptScene()) {
 				yield return StartCoroutine(DoCurrentTurnStep());
 				Game.instance.NextTurnStep();
@@ -340,6 +344,7 @@ namespace _7DRL.Scenes.Map {
 			}
 			yield return new WaitForSeconds(.5f);
 			Destroy(tokens[misc].gameObject);
+			tokens.Remove(misc);
 			Game.instance.dungeonMap.RemoveMisc(misc);
 		}
 
@@ -348,6 +353,7 @@ namespace _7DRL.Scenes.Map {
 			yield return StartCoroutine(EarnLettersFromDialog(bookMisc.bookName));
 			yield return new WaitForSeconds(.5f);
 			Destroy(tokens[misc].gameObject);
+			tokens.Remove(misc);
 			Game.instance.dungeonMap.RemoveMisc(misc);
 		}
 
@@ -355,6 +361,7 @@ namespace _7DRL.Scenes.Map {
 			var skillMisc = misc as ISkillDungeonMisc ?? throw new InvalidCastException();
 			yield return StartCoroutine(ResolveSkillInteraction(skillMisc.skillCommand));
 			Destroy(tokens[misc].gameObject);
+			tokens.Remove(misc);
 			Game.instance.dungeonMap.RemoveMisc(misc);
 		}
 
@@ -362,12 +369,14 @@ namespace _7DRL.Scenes.Map {
 			var powerDungeonMisc = misc as IPowerDungeonMisc ?? throw new InvalidCastException();
 			yield return StartCoroutine(ResolvePowerInteraction(powerDungeonMisc.powerLetter));
 			Destroy(tokens[misc].gameObject);
+			tokens.Remove(misc);
 			Game.instance.dungeonMap.RemoveMisc(misc);
 		}
 
 		private IEnumerator ResolveMiscMaxHealth(IDungeonMisc misc) {
 			yield return StartCoroutine(ResolveMaxHealthInteraction());
 			Destroy(tokens[misc].gameObject);
+			tokens.Remove(misc);
 			Game.instance.dungeonMap.RemoveMisc(misc);
 		}
 

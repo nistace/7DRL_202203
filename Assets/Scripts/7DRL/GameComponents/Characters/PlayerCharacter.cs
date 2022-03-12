@@ -82,6 +82,10 @@ namespace _7DRL.GameComponents.Characters {
 		}
 
 		public void IncreaseMaxHealth() => _maxHealth += Mathf.RoundToInt(.1f * _maxHealth);
-		public void LevelUp() => _level++;
+
+		public void LevelUp() {
+			_level++;
+			onNameChanged.Invoke();
+		}
 	}
 }

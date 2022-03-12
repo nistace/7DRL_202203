@@ -22,6 +22,7 @@ namespace _7DRL.GameComponents.TextAndLetters.Ui {
 			this.reserve?.onReserveChanged.RemoveListener(Refresh);
 			this.reserve = reserve;
 			_container.ClearChildren();
+			items.Clear();
 			for (var c = 'A'; c <= 'Z'; c++) {
 				items.Add(c, Instantiate(_itemPrefab, _container));
 				items[c].letter = c;

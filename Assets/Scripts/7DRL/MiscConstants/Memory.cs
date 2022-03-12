@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using _7DRL.Data;
+using _7DRL.Data.IntroScript;
 using _7DRL.GameComponents.Characters;
 using _7DRL.GameComponents.Dungeons;
 using _7DRL.GameComponents.Interactions;
@@ -45,6 +46,7 @@ namespace _7DRL.MiscConstants {
 		public static IReadOnlyDictionary<InteractionType, IReadOnlyCollection<InteractionOption>> interactionOptions    { get; private set; }
 		public static BookNameGenerator                                                            bookNameGenerator     { get; private set; }
 		public static ChestContentGenerator                                                        chestContentGenerator { get; private set; }
+		public static IReadOnlyList<IntroScriptLine>                                               introScriptLines      { get; private set; }
 
 		public static IEnumerator Load() {
 			commands = DataFactory.LoadCommands().ToArray();
@@ -60,6 +62,8 @@ namespace _7DRL.MiscConstants {
 			chestContentGenerator = DataFactory.LoadChestContentGenerator();
 			yield return null;
 			interactionOptions = DataFactory.LoadInteractionOptions();
+			yield return null;
+			introScriptLines = DataFactory.LoadIntroScriptLines();
 			yield return null;
 		}
 	}

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using _7DRL.Data.IntroScript;
 using _7DRL.GameComponents.Characters;
 using _7DRL.GameComponents.Interactions;
 using _7DRL.GameComponents.TextAndLetters;
@@ -78,6 +79,17 @@ namespace _7DRL.Data {
 				result[(int)type].Add(new InteractionOption(command, type, endOfSentence, charged));
 			}
 			return result.Select((t, i) => (i, t)).ToDictionary(t => (InteractionType)t.i, t => (IReadOnlyCollection<InteractionOption>)t.t);
+		}
+
+		public static IReadOnlyList<IntroScriptLine> LoadIntroScriptLines() {
+			var commandsCsv = Resources.Load<TextAsset>("Sheets/introScripts");
+			var columns = commandsCsv.CsvHeaderAsDictionary();
+			return (from line in commandsCsv.CsvLines()
+						let text = line[columns["Text"]]
+						let continueCommand = (line[columns["Continue"]], line[columns["ContinueEndOfSentence"]])
+						let skipCommand = (line[columns["Skip"]], line[columns["SkipEndOfSentence"]])
+						let sprite = line[columns["Sprite"]]
+						select new IntroScriptLine(text, continueCommand, skipCommand, sprite)).ToList();
 		}
 	}
 }

@@ -53,7 +53,7 @@ namespace _7DRL.Scenes {
 			if (lastCoroutine != null) yield return lastCoroutine;
 		}
 
-		protected static void HandleDialogInputChanged(string input, InteractionOption preferred) => CommonGameUi.dialogPanel.SetCommandProgress(preferred.inputValue, input.Length);
+		protected static void HandleDialogInputChanged(string input, ITextInputResult preferred) => CommonGameUi.dialogPanel.SetCommandProgress(preferred.textInput, input.Length);
 		protected static void HandleLetterPaid(char letter) => CommonGameUi.playerLetterReserve.FlashLine(letter, LetterReserveUi.FlashType.Remove);
 		protected static void HandleLetterReimbursed(char letter) => CommonGameUi.playerLetterReserve.FlashLine(letter, LetterReserveUi.FlashType.Add);
 		protected static void HandleLetterMissing(char letter) => CommonGameUi.playerLetterReserve.FlashLine(letter, LetterReserveUi.FlashType.Missing);

@@ -59,6 +59,12 @@ MonoBehaviour:
   - dungeon.path.13
   - dungeon.path.14
   - dungeon.path.15
+  - intro.title
+  - intro.door
+  - intro.enemies
+  - intro.miscs
+  - intro.commands
+  - intro.letters
   _items:
   - {fileID: 6621252853494989987, guid: 0bff1752c6906e34f8303a96126a6b80, type: 3}
   - {fileID: 3357360333254942192, guid: 0bff1752c6906e34f8303a96126a6b80, type: 3}
@@ -102,3 +108,9 @@ MonoBehaviour:
   - {fileID: -3673530175128272526, guid: f50a9c8522582584689c4fe84737e05c, type: 3}
   - {fileID: -1075935125904288142, guid: f50a9c8522582584689c4fe84737e05c, type: 3}
   - {fileID: 6106492305828168551, guid: f50a9c8522582584689c4fe84737e05c, type: 3}
+  - {fileID: 21300000, guid: 57d878daa6255254dacdaba0628e9751, type: 3}
+  - {fileID: 21300000, guid: 58fd2070bc98e954a8322fcc420a4d1c, type: 3}
+  - {fileID: 21300000, guid: e56b80be255d44e4f8f71c9262b55973, type: 3}
+  - {fileID: 21300000, guid: 3c9773b52b60e364eb685094f097e5ff, type: 3}
+  - {fileID: 21300000, guid: 2298fb46e5b69b144ad0151ad52173ad, type: 3}
+  - {fileID: 21300000, guid: 4113de80ba19b294d828184c8d7e0878, type: 3}

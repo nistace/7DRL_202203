@@ -20,4 +20,4 @@ MonoBehaviour:
   _maxPower: 2147483647
   _usedInLocations: 1
   _initialPlayerAmount: 1
-  _initialLetterAmountCoefficient: 2
+  _initialLetterAmountCoefficient: 4

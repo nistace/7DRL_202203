@@ -10,13 +10,14 @@ using UnityEngine;
 using Utils.Extensions;
 
 namespace _7DRL.Scenes.GameOver {
-	public class GameOverScreenManager : SceneManager {
+	public class GameOverSceneManager : SceneManager {
 		[SerializeField] protected GameOverCharacter _gameOverCharacter;
 		[SerializeField] protected Vector3           _cameraPosition = Vector3.back;
 
 		public void Show(GameOverType type) => StartCoroutine(PlayGameOverScreen(type));
 
 		private IEnumerator PlayGameOverScreen(GameOverType type) {
+			CommonGameUi.SetToggleKnownCommandsEnabled(false);
 			CameraUtils.main.transform.position = _cameraPosition;
 			yield return StartCoroutine(GetResolutionFunc(type)());
 		}

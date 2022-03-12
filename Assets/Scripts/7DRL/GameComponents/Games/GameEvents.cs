@@ -10,5 +10,7 @@ namespace _7DRL.Games {
 		public static Encounter.Event onEncounterAtPlayerPosition { get; } = new Encounter.Event();
 		public static UnityEvent      onTurnChanged               { get; } = new UnityEvent();
 		public static UnityEvent      onGameOverEnded             { get; } = new UnityEvent();
+		public static UnityEvent      onNewGameIntroEnded            { get; } = new UnityEvent();
+		public static UnityEvent      onQuitGame                  { get; } = new UnityEvent();
 	}
 }

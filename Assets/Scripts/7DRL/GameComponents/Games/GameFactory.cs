@@ -20,7 +20,7 @@ namespace _7DRL.Games {
 			var playerUnknownCommands = new HashSet<Command>(Memory.commands);
 			playerUnknownCommands.RemoveAll(playerInitialCommands);
 			yield return null;
-			var playerInitialLetters = GeneratePlayerInitialLetters(letterPowers, playerInitialCommands);
+			var playerInitialLetters = GeneratePlayerInitialLetters(playerInitialCommands);
 			yield return null;
 			var map = GenerateMap(RlConstants.Dungeon.width, RlConstants.Dungeon.height, letterPowers, ref playerUnknownCommands);
 			yield return null;
@@ -30,11 +30,8 @@ namespace _7DRL.Games {
 		private static IReadOnlyCollection<Command> GeneratePlayerInitialCommands() => Memory.commandTypes.Where(t => t.initialPlayerAmount > 0)
 			.SelectMany(t => Memory.commandsPerType[t].ToList().Shuffled().Take(t.initialPlayerAmount)).ToList();
 
-		private static Dictionary<char, int> GeneratePlayerInitialLetters(Dictionary<char, int> letterPowers, IEnumerable<Command> playerInitialCommands) {
-			var playerInitialLetters = TextUtils.allLetters.ToDictionary(t => t, t => 0);
-			foreach (var letterPower in letterPowers) {
-				playerInitialLetters[letterPower.Key] += Mathf.CeilToInt((float)RlConstants.Player.initialLettersPerPower / letterPower.Value);
-			}
+		private static Dictionary<char, int> GeneratePlayerInitialLetters(IEnumerable<Command> playerInitialCommands) {
+			var playerInitialLetters = TextUtils.allLetters.ToDictionary(t => t, t => RlConstants.Player.baseLetterAmount);
 			foreach (var knownCommand in playerInitialCommands) {
 				foreach (var letter in knownCommand.textInput) {
 					playerInitialLetters[letter] += Mathf.RoundToInt(RlConstants.Player.initialLettersPerKnownCommands * knownCommand.type.initialLetterAmountCoefficient);
@@ -94,7 +91,7 @@ namespace _7DRL.Games {
 
 		private static InteractionOption GetRandomInteraction(InteractionType type, HashSet<char> forbiddenLetters) {
 			var option = Memory.interactionOptions[type].Where(t => !forbiddenLetters.Contains(t.inputValue[0])).Random();
-			forbiddenLetters.Remove(option.inputValue[0]);
+			forbiddenLetters.Add(option.inputValue[0]);
 			return option;
 		}
 
@@ -137,8 +134,9 @@ namespace _7DRL.Games {
 				var position = new Vector2Int(Random.Range(0, gridDirections.GetLength(0)), Random.Range(0, gridDirections.GetLength(1)));
 				if (result.ContainsKey(position)) continue;
 				if (rooms.Contains(position)) continue;
+				var distance = Vector2.Distance(RlConstants.Dungeon.playerStartPosition, position) / maxDistance - .1f;
 
-				result.Add(position, GenerateEncounter(position, Vector2.Distance(RlConstants.Dungeon.playerStartPosition, position) / maxDistance, ref playerUnknownCommands, letterPowers));
+				result.Add(position, GenerateEncounter(position, distance, ref playerUnknownCommands, letterPowers));
 			}
 
 			return result;
