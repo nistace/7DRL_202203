@@ -47,8 +47,11 @@ namespace _7DRL {
 		}
 
 		private void HandleQuitGame() => _loadingScreen.Show(() => {
-			if (Application.isEditor && Application.isPlaying) UnityEditor.EditorApplication.isPlaying = false;
-			else Application.Quit();
+#if UNITY_EDITOR
+			UnityEditor.EditorApplication.isPlaying = false;
+#else
+				Application.Quit();
+#endif
 		});
 
 		private void HandleNewGameIntroEnded() => StartCoroutine(StartNewGame());

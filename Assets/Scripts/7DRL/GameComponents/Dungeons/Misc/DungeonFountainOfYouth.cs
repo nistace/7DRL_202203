@@ -9,7 +9,7 @@ namespace _7DRL.GameComponents.Dungeons.Misc {
 		public IDungeonMisc.Type                      type                => IDungeonMisc.Type.FountainOfYouth;
 		public InteractionOption                      fountainInteraction { get; }
 		public InteractionOption                      skipInteraction     { get; }
-		public string                                 interactionName     => "Portal";
+		public string                                 interactionName     => "Fountain of Youth";
 		public Sprite                                 tokenSprite         => Sprites.Of("token.fountainOfYouth");
 		public string                                 interactionText     => "You found a Fountain of Youth. Drink from it to get all your health points. What do you want to do?";
 		public IReadOnlyCollection<InteractionOption> interactionOptions  => new[] { fountainInteraction, skipInteraction };

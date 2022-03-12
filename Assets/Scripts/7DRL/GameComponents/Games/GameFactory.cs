@@ -209,7 +209,7 @@ namespace _7DRL.Games {
 			if (options == 0 || options == 2) { // skill
 				var score = Mathf.RoundToInt(RlConstants.Dungeon.skillCommandScore * Vector2.Distance(position, RlConstants.Dungeon.playerStartPosition));
 				skillInteraction.skill = playerUnknownCommands.GetWithClosestScore(t => TextUtils.GetInputValue(t.textInput, letterPowers), score);
-				skillInteraction.interaction = new InteractionOption(GetRandomInteraction(InteractionType.Skill, uniqueFirstLetters), $"the {skillInteraction.skill.textInput} command");
+				skillInteraction.interaction = new InteractionOption(GetRandomInteraction(InteractionType.Skill, uniqueFirstLetters), $"the {skillInteraction.skill.textInput} command.");
 				playerUnknownCommands.Remove(skillInteraction.skill);
 			}
 			if (options == 1 || options == 2) { // power
